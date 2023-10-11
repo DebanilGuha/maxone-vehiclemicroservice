@@ -1,0 +1,146 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "Vehicle Registration for Inbound",
+  "States": {
+    "Vehicle Registration for Inbound": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$$",
+        "FunctionName": "${inboundFunctionArn}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "SNS Publish to Vehicle"
+    },
+    "SNS Publish to Vehicle": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
+      "Parameters": {
+        "Message": {
+          "Input.$": "$", 
+          "TaskToken.$": "$$.Task.Token" 
+          },
+        "TopicArn": "${vehicleArn}"
+      },
+      "Next": "Vehicle Registration for New"
+    },
+    "Vehicle Registration for New": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "${newFunctionArn}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "SNS Publish to Vehicle for New"
+    },
+    "SNS Publish to Vehicle for New": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
+      "Parameters": {
+        "Message": {
+          "Input.$": "$", 
+          "TaskToken.$": "$$.Task.Token" 
+          },
+        "TopicArn": "${vehicleArn}"
+      },
+      "Next": "Vehicle Registration for ReadyForActivation"
+    },
+    "Vehicle Registration for ReadyForActivation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "${readyForActivationArn}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "SNS Publish to Vehicle for ReadyForActivation"
+    },
+    "SNS Publish to Vehicle for ReadyForActivation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
+      "Parameters": {
+        "Message": {
+          "Input.$": "$", 
+          "TaskToken.$": "$$.Task.Token" 
+          },
+        "TopicArn": "${vehicleArn}"
+      },
+      "Next": "Vehicle Activation"
+    },
+    "Vehicle Activation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "${activateVehicle}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "SNS Publish to Vehicle Activation"
+    },
+    "SNS Publish to Vehicle Activation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
+      "Parameters": {
+        "Message": {
+          "Input.$": "$", 
+          "TaskToken.$": "$$.Task.Token" 
+          },
+        "TopicArn": "${vehicleArn}"
+      },
+      "End": true
+    }
+  } 
+}
