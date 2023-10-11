@@ -12,8 +12,7 @@ const ajv = new Ajv({ allErrors: true });
 type CollectionName = string;
 
 function getDB() {
-  const uri =
-    "mongodb+srv://debanil:maxdrive123@london-cluster-vams.wia8y.mongodb.net/vamsmongodb+srv://debanil:maxdrive123@london-cluster-vams.wia8y.mongodb.net/?retryWrites=true&w=majority";
+  const uri: string = process.env.MONGODBURL as string;
   const client = new MongoClient(uri);
   const db = client.db("vams");
   return db;

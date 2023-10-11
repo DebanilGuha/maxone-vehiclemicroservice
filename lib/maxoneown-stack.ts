@@ -15,7 +15,9 @@ import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 export class MaxoneownStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-
+    const defaultenv : {[key:string]: string}= {
+      MONGODBURL: process.env.MONGODBURL || ''
+    };
     const stepfunction_role = new iam.Role(this, 'VAMS3.0FunctionsRole', {
       assumedBy: new iam.ServicePrincipal('states.amazonaws.com'),
     });
@@ -29,6 +31,7 @@ export class MaxoneownStack extends Stack {
       {
         runtime: lambda.Runtime.NODEJS_18_X,
         timeout: Duration.seconds(5),
+        environment: {...defaultenv},
         bundling: {
           nodeModules: ["mongodb", "ajv", "aws-sdk"],
           minify: true,
@@ -48,6 +51,7 @@ export class MaxoneownStack extends Stack {
       {
         runtime: lambda.Runtime.NODEJS_18_X,
         timeout: Duration.seconds(5),
+        environment: {...defaultenv},
         bundling: {
           nodeModules: ["mongodb", "ajv", "aws-sdk"],
           minify: true,
@@ -66,6 +70,7 @@ export class MaxoneownStack extends Stack {
       {
         runtime: lambda.Runtime.NODEJS_18_X,
         timeout: Duration.seconds(5),
+        environment: {...defaultenv},
         bundling: {
           nodeModules: ["mongodb", "ajv", "aws-sdk"],
           minify: true,
@@ -86,7 +91,8 @@ export class MaxoneownStack extends Stack {
         runtime: lambda.Runtime.NODEJS_18_X,
         timeout: Duration.seconds(5),
         environment:{
-          STATE_MACHINE_ARN:''
+          STATE_MACHINE_ARN:'',
+          ...defaultenv
         },
         bundling: {
           nodeModules: ["mongodb", "ajv", "aws-sdk"],
@@ -107,6 +113,7 @@ export class MaxoneownStack extends Stack {
         runtime: lambda.Runtime.NODEJS_18_X,
         timeout: Duration.seconds(5),
         handler:'handler',
+        environment: {...defaultenv},
         bundling: {
           nodeModules: ["mongodb", "ajv", "aws-sdk"],
           minify: true,
