@@ -84,6 +84,7 @@ export class StateMachineTriggers {
             if (!body?.vehicle_id) {
                 body.vehicle_id = await generateVehicleId(body.platformInfo, body.vehicleType, body.vehicleLocation, this.uniqueIdentifierCounterCollection)
             }
+            body.documentStatus = 'New';
             await stepfunctions.sendTaskSuccess({
                 output: JSON.stringify(body),
                 taskToken: TaskToken

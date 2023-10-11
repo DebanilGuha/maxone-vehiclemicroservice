@@ -26,11 +26,14 @@
   "dependencies": {
     "@aws-cdk/aws-stepfunctions-tasks": "^1.204.0",
     "@types/aws-sdk": "^2.7.0",
+    "@types/dotenv": "^8.2.0",
     "ajv": "^8.12.0",
     "aws-cdk-lib": "2.96.2",
     "aws-lambda": "^1.0.7",
     "aws-sdk": "^2.1459.0",
     "constructs": "^10.0.0",
+    "dotenv": "^16.3.1",
+    "dotenv-expand": "^10.0.0",
     "mongodb": "^6.1.0"
   }
 }

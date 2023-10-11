@@ -2,6 +2,10 @@ import * as mongo from "mongodb";
 const { MongoClient } = mongo;
 import Ajv from "ajv";
 import { IVehicle } from "../../types/vehicle";
+import * as dotenv from 'dotenv';
+import {expand} from 'dotenv-expand';
+const env= dotenv.config();
+expand(env);
 import { UniqueIdentifier } from "../../types/uniqueIdentifier";
 const ajv = new Ajv({ allErrors: true });
 
