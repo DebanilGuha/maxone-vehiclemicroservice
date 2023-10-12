@@ -4,6 +4,7 @@ import { Collection, UpdateResult } from "mongodb";
 
 import { IVehicle } from "../../types/vehicle";
 import * as mongo from "mongodb";
+import { UniqueIdentifier } from "../../types/uniqueIdentifier";
 
 export const handler: Handler = async (event: any) => {
   try {
@@ -12,12 +13,15 @@ export const handler: Handler = async (event: any) => {
       Execution: { Input },
     } = event;
     let response:IVehicle;
-    
+    const uniqueIdentifierCounterCollection = (await getCollection('uniqueIdentifierCounter')) as unknown as mongo.Collection<UniqueIdentifier>;
     const collectionVehicle: Collection<Document> = getCollection("vehicles");
-    const Vehicle: mongo.WithId<IVehicle> | null = (await collectionVehicle.findOne({vehicle_id: Input.vehicle_id})) as mongo.WithId<IVehicle> | null;
+    const Vehicle: mongo.WithId<IVehicle> | null = (await collectionVehicle.findOne({plateNumber: Input.plateNumber})) as mongo.WithId<IVehicle> | null;
     const options: mongo.FindOneAndUpdateOptions={ returnDocument: 'before' }
     console.log("🚀 ~ file: index.ts:19 ~ consthandler:Handler= ~ Vehicle:", Vehicle)
     if(!Vehicle){
+      if (!Input?.vehicle_id) {
+        Input.vehicle_id = await generateVehicleId(Input.platformInfo, Input.vehicleType, Input.vehicleLocation, uniqueIdentifierCounterCollection)
+    }
       await collectionVehicle.insertOne(Input)
       response = Input
     }

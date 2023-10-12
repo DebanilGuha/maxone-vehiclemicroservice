@@ -13,13 +13,14 @@ export class StateMachineTriggers {
     async stateMachineForwardForNew(body: IVehicle, TaskToken: string) {
         try {
             if (!this.checkValidationForInbound(body)) {
-                throw 'Not Complying to Inbound';
+                throw 'Not Complying to New';
             }
+            body.documentStatus = 'ReadyForActivation';
             await stepfunctions.sendTaskSuccess({
                 output: JSON.stringify(body),
                 taskToken: TaskToken
             }).promise();
-            console.log('');
+            console.log('New Added');
 
         } catch (err) {
             throw err;
@@ -29,20 +30,8 @@ export class StateMachineTriggers {
 
     async stateMachineForwardForReadyForActivation(body: IVehicle, TaskToken: string) {
         try {
-            await stepfunctions.sendTaskSuccess({
-                output: JSON.stringify(body),
-                taskToken: TaskToken
-            }).promise();
-
-        } catch (err) {
-            throw err;
-        }
-    }
-
-    async stateMachineForwardForActivation(body: IVehicle, TaskToken: string) {
-        try {
             const prospectCollection = await getCollection('dummyactivation');
-            const prospect: mongodb.WithId<Prospect> = (await prospectCollection.findOne({documentStatus:'NotActivated'})) as unknown as mongodb.WithId<Prospect>;
+            const prospect: mongodb.WithId<Prospect> = (await prospectCollection.findOne({documentStatus:'NotActivated',prospect_id: 'MAX-LO-00601'})) as unknown as mongodb.WithId<Prospect>;
             const toAddForActivation:any = {
                 "champion_id": null,
                 "champion_uuid_id": null,
@@ -58,8 +47,8 @@ export class StateMachineTriggers {
                 "nameOfFleetOfficer": "daniel.onyebuchi",
                 "parent_activation_id": null,
                 "platformInfo": "Max",
-                "prospectLocation": prospect.prospectLocation,
-                "prospect_id": prospect.prospect_id,
+                "prospectLocation": body?.vehicleCity || '',
+                "prospect_id": prospect?.prospect_id,
                 "serviceType": "MAX X Ibadan",
                 "vehicleLocation": body.vehicleLocation,
                 "vehicleOptions": "MAX Commercial",
@@ -67,8 +56,22 @@ export class StateMachineTriggers {
             };
             const activationCollection =  await getCollection('dummyactivation');
             await activationCollection.insertOne(toAddForActivation); 
+            body.documentStatus = 'Activation';
             await stepfunctions.sendTaskSuccess({
-                output: JSON.stringify(toAddForActivation),
+                output: JSON.stringify(body),
+                taskToken: TaskToken
+            }).promise();
+
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async stateMachineForwardForActivation(body: IVehicle, TaskToken: string) {
+        try {
+           
+            await stepfunctions.sendTaskSuccess({
+                output: JSON.stringify(body),
                 taskToken: TaskToken
             }).promise();
 
@@ -80,10 +83,7 @@ export class StateMachineTriggers {
 
     async stateMachineForwardForInbound(body: IVehicle, TaskToken: string) {
         try {
-            this.uniqueIdentifierCounterCollection = (await getCollection('uniqueIdentifierCounter')) as unknown as mongodb.Collection<UniqueIdentifier>;
-            if (!body?.vehicle_id) {
-                body.vehicle_id = await generateVehicleId(body.platformInfo, body.vehicleType, body.vehicleLocation, this.uniqueIdentifierCounterCollection)
-            }
+            
             body.documentStatus = 'New';
             await stepfunctions.sendTaskSuccess({
                 output: JSON.stringify(body),

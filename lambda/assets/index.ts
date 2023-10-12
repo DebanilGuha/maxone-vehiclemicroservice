@@ -2,10 +2,6 @@ import * as mongo from "mongodb";
 const { MongoClient } = mongo;
 import Ajv from "ajv";
 import { IVehicle } from "../../types/vehicle";
-import * as dotenv from 'dotenv';
-import {expand} from 'dotenv-expand';
-const env= dotenv.config();
-expand(env);
 import { UniqueIdentifier } from "../../types/uniqueIdentifier";
 const ajv = new Ajv({ allErrors: true });
 
@@ -69,7 +65,7 @@ export const generateVehicleId = async (
 
 export function setForNewExecutiontoSNS(body: IVehicle,status:string) {
   body.messageInfo = {
-      documentStatus: body.documentStatus || status,
+      documentStatus:  status,
       origin: 'vams2.0'
   };
   return body;

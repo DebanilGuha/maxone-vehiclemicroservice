@@ -62,15 +62,7 @@ async function processProspect(
         TopicArn: process.env.PROSPECT_SNS,
     };
 
-    await sns
-        .publish(prospectParam)
-        .promise()
-        .then((data: any) => {
-            console.log('Message ID', data, 'has been sent');
-        })
-        .catch((err: any) => {
-            console.error(err, err.stack);
-        });
+   
 }
 
 /**
@@ -161,32 +153,7 @@ async function processVehicle(
         },
     );
 
-    const newVehicle: any = {
-        ...findVehicle,
-        ...vehicleUpdate,
-        messageInfo: {
-            documentStatus: changeDocumentStatus,
-            origin: 'vams2.0',
-        },
-        prospect_id: document?.prospect_id,
-        lastUpdateTime: new Date().toISOString(),
-        messageType: 'activated',
-    };
-    delete newVehicle['_id'];
-    delete newVehicle['documentStatus'];
-    const vehicleParam: any = {
-        Message: JSON.stringify(newVehicle),
-        TopicArn: process.env.VEHICLE_SNS || 'arn:aws:sns:eu-west-2:048464312507:Vehicle',
-    };
-    await sns
-        .publish(vehicleParam)
-        .promise()
-        .then((data: any) => {
-            console.log('Message ID', data, 'has been sent');
-        })
-        .catch((err: any) => {
-            console.error(err, err.stack);
-        });
+    
 }
 
 export { processChampion, processProspect, checkGraduateAndNormalData, processVehicle };

@@ -8,27 +8,29 @@ const NEW='New'
 export const handler: Handler = async (event: any) => {
   try {
     console.log("event 👉", event);
-    
+    delete event['_id'];
     let response:IVehicle;
     
     const collectionVehicle: Collection<Document> = getCollection("vehicles");
     const Vehicle: mongo.WithId<IVehicle> | null = (await collectionVehicle.findOne({vehicle_id: event.vehicle_id})) as mongo.WithId<IVehicle> | null;
     const options: mongo.FindOneAndUpdateOptions={ returnDocument: 'after' }
-    if(Vehicle === null){
-      await collectionVehicle.insertOne(event) 
-      response = event
-    }
-    else{
+    
+    if(Vehicle){
       const returnedData : {value: UpdateResult}= (await collectionVehicle.findOneAndUpdate({vehicle_id: event.vehicle_id},{$set:{...event,documentStatus:NEW}},options)) as unknown as {value: UpdateResult};
-      console.log("🚀 ~ file: index.ts:23 ~ consthandler:Handler= ~ returnedData:", returnedData)
       response = returnedData as unknown as IVehicle;
     }
-    console.log("🚀 ~ file: index.ts:27 ~ consthandler:Handler= ~ response:", response)
+    else{
+      await collectionVehicle.insertOne(event);
+      response = event
+    }
+
+    
     response = setForNewExecutiontoSNS(response,NEW);
     return response;
   } catch (error: any) {
+    console.error("Error",error);
     return {
-      body: JSON.stringify({ message: Error }),
+      body: JSON.stringify({ message: error }),
       statusCode: 500,
     };
   }

@@ -10,7 +10,10 @@ import * as path from "path";
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
-
+import * as dotenv from 'dotenv';
+import * as expand from 'dotenv-expand';
+const env= dotenv.config();
+expand.expand(env);
 
 export class MaxoneownStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -30,12 +33,9 @@ export class MaxoneownStack extends Stack {
       "newCreateOrUpdate",
       {
         runtime: lambda.Runtime.NODEJS_18_X,
-        timeout: Duration.seconds(5),
+        timeout: Duration.seconds(15),
+        memorySize : 2048,
         environment: {...defaultenv},
-        bundling: {
-          nodeModules: ["mongodb", "ajv", "aws-sdk"],
-          minify: true,
-        },
         entry: path.join(
           __dirname,
           "/../lambda",
@@ -50,7 +50,7 @@ export class MaxoneownStack extends Stack {
       "inboundCreateOrUpdate",
       {
         runtime: lambda.Runtime.NODEJS_18_X,
-        timeout: Duration.seconds(5),
+        timeout: Duration.seconds(15),
         environment: {...defaultenv},
         bundling: {
           nodeModules: ["mongodb", "ajv", "aws-sdk"],
@@ -89,7 +89,8 @@ export class MaxoneownStack extends Stack {
       "receiveToken",
       {
         runtime: lambda.Runtime.NODEJS_18_X,
-        timeout: Duration.seconds(5),
+        timeout: Duration.minutes(5),
+        memorySize : 2048,
         environment:{
           STATE_MACHINE_ARN:'',
           ...defaultenv

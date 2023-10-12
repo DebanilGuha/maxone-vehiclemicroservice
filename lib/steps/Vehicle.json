@@ -128,19 +128,34 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "SNS Publish to Vehicle Activation"
+      "Next": "Choice"
     },
-    "SNS Publish to Vehicle Activation": {
+    "Choice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.championGeneration",
+          "BooleanEquals": false,
+          "Next": "Fail"
+        }
+      ],
+      "Default": "SNS Publish for Champion Retrieval"
+    },
+    "Fail": {
+      "Type": "Fail"
+    },
+    "SNS Publish for Champion Retrieval": {
       "Type": "Task",
       "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
       "Parameters": {
         "Message": {
-          "Input.$": "$", 
-          "TaskToken.$": "$$.Task.Token" 
-          },
+          "Input.$": "$",
+          "TaskToken.$": "$$.Task.Token"
+        },
         "TopicArn": "${vehicleArn}"
       },
       "End": true
     }
+
   } 
 }

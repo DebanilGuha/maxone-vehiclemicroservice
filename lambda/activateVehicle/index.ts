@@ -1,5 +1,5 @@
 import { Handler } from "aws-lambda";
-import { getCollection, generateVehicleId, validateSchema, setForNewExecutiontoSNS } from "../assets";
+import { getCollection, generateVehicleId, validateSchema } from "../assets";
 import { Collection, UpdateResult } from "mongodb";
 import * as mongodb from "mongodb";
 import { processProspect, processVehicle } from "./processing";
@@ -44,8 +44,8 @@ const activationProcess = async (): Promise<any> => {
                 { returnDocument: 'before' },
             );
 
-            // console.log("Updating Activation : --> ",activationUpdate);break;
-            const document: any = activationUpdate?.value;
+            console.log("Updating Activation : --> ",activationUpdate);
+            const document: any = activationUpdate;
             if (!document) {
                 stopLoop = true;
                 continue;
@@ -70,6 +70,15 @@ const activationProcess = async (): Promise<any> => {
             if (
                 checkValidations(findVehicle, findProspect, document)
             ) {
+                await processVehicle(
+                    'ActivatedButNotCheckedOut', 
+                    document, 
+                    vehicleCollection, 
+                    findVehicle, 
+                    incrementedValue
+                    );
+
+
                     await processProspect(
                         findVehicle,
                         document,
@@ -192,14 +201,11 @@ export function checkValidations(findVehicle: any, findProspect: any, activation
 export const handler: Handler = async (event: any) => {
     try {
       console.log("event 👉", event);
-      const {
-        Execution: { Input },
-      } = event;
-      let response:IVehicle;
-      response = Input;
+     const activationData = await activationProcess();
+      let response:object;
+      response = activationData === "Activation Completed for the lambda" ? {championGeneration: true} : {championGeneration: false};
       
      
-      response = setForNewExecutiontoSNS(response,ACTIVATION);
       return response;
     } catch (error: any) {
       return {

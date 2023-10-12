@@ -31,7 +31,7 @@ export const handler: Handler = async (event: any,context: Context, callback: Ca
         delete message['messageInfo'];
         if(Input?.documentStatus === 'New'){
         console.log(`Entered New`);
-          await trigger.stateMachineForwardForReadyForActivation(message,TaskToken)
+          await trigger.stateMachineForwardForNew(message,TaskToken)
         }
         if(Input?.documentStatus === 'Inbound'){
         console.log(`Entered Inbound`);
@@ -39,6 +39,10 @@ export const handler: Handler = async (event: any,context: Context, callback: Ca
         }
         if(Input?.documentStatus === 'ReadyForActivation'){
         console.log(`Entered ReadyForActivation`);
+          await trigger.stateMachineForwardForReadyForActivation(message,TaskToken)
+        }
+        if(Input?.documentStatus === 'Activation'){
+        console.log(`Entered Activation`);
           await trigger.stateMachineForwardForActivation(message,TaskToken)
         }
         break;
