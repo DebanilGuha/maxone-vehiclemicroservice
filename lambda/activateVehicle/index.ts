@@ -203,7 +203,7 @@ export const handler: Handler = async (event: any) => {
       console.log("event 👉", event);
      const activationData = await activationProcess();
       let response:object;
-      response = activationData === "Activation Completed for the lambda" ? {championGeneration: true} : {championGeneration: false};
+      response = activationData === "Activation Completed for the lambda" ? {championGeneration: true,...event} : {championGeneration: false,...event};
       
      
       return response;

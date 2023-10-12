@@ -61,6 +61,31 @@ export const generateVehicleId = async (
   vehicleCode.push(value.toString().padStart(5, '0'));
   return vehicleCode.join('-');
 };
+export const generateChampionId = async (
+  platformInfo: string,
+  location: string,
+  uniqueIdentifierCounterCollection: mongo.Collection<UniqueIdentifier>,
+): Promise<string> => {
+  const locationMapCollection: any = await getCollection('locations');
+  const locationCode = await locationMapCollection.findOne({
+      location: { $eq: location },
+  });
+ 
+  const vehicleCode = [platformInfo?.toUpperCase(), locationCode?.code, 'CH'];
+  const inc = 1;
+  const collection:any =(await uniqueIdentifierCounterCollection.findOneAndUpdate(
+    { _id: 'champion_id' },
+    {
+      $inc: { count: inc },
+    },
+    { returnDocument: 'after' }
+  )) as unknown ;
+  console.log("🚀 ~ file: index.ts:59 ~ collection:", collection)
+  const value = collection?.count;
+  console.log("🚀 ~ file: index.ts:60 ~ value:", value);
+  vehicleCode.push(value.toString().padStart(5, '0'));
+  return vehicleCode.join('-');
+};
 
 
 export function setForNewExecutiontoSNS(body: IVehicle,status:string) {

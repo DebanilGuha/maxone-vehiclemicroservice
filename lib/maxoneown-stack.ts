@@ -107,6 +107,33 @@ export class MaxoneownStack extends Stack {
         ),
       }
     );
+
+    //Champion to Get Token
+    const championReceiveToken = new NodejsFunction(
+      this,
+      "championReceiveToken",
+      {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        timeout: Duration.minutes(5),
+        memorySize : 2048,
+        environment:{
+          STATE_MACHINE_ARN:'',
+          ...defaultenv
+        },
+        bundling: {
+          nodeModules: ["mongodb", "ajv", "aws-sdk"],
+          minify: true,
+        },
+        entry: path.join(
+          __dirname,
+          "/../lambda",
+          'championReceiveToken',
+          'index.ts'
+        ),
+      }
+    );
+
+
     const activateVehicle = new NodejsFunction(
       this,
       "activateVehicle",
@@ -133,6 +160,12 @@ export class MaxoneownStack extends Stack {
       resources: ['*'],
       }));
 
+    championReceiveToken.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['states:SendTaskSuccess', 'states:SendTaskFailure'],
+      resources: ['*'],
+      }));
+
       
 
     const vehicleTopic = new sns.Topic(this, 'VehicleTopic', {
@@ -140,8 +173,15 @@ export class MaxoneownStack extends Stack {
       fifo: false,
       topicName: 'Vehicle'
     });
+    
+    const championTopic = new sns.Topic(this, 'ChampionTopic', {
+      displayName: 'My SNS Vehicle Topic',
+      fifo: false,
+      topicName: 'Champion'
+    });
 
     vehicleTopic.addSubscription(new subscriptions.LambdaSubscription(receiveToken));
+    championTopic.addSubscription(new subscriptions.LambdaSubscription(championReceiveToken));
 
 
 
@@ -159,6 +199,7 @@ export class MaxoneownStack extends Stack {
           newFunctionArn: newCreateOrUpdate.functionArn,
           inboundFunctionArn: inboundCreateOrUpdate.functionArn,
           vehicleArn: vehicleTopic.topicArn,
+          championArn: championTopic.topicArn,
           activateVehicle: activateVehicle.functionArn,
           readyForActivationArn: readyForActivationCreateOrUpdate.functionArn
         },

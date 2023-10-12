@@ -135,11 +135,11 @@
       "Choices": [
         {
           "Variable": "$.championGeneration",
-          "BooleanEquals": false,
-          "Next": "Fail"
+          "BooleanEquals": true,
+          "Next": "SNS Publish for Champion Retrieval"
         }
       ],
-      "Default": "SNS Publish for Champion Retrieval"
+      "Default": "Fail"
     },
     "Fail": {
       "Type": "Fail"
@@ -152,7 +152,7 @@
           "Input.$": "$",
           "TaskToken.$": "$$.Task.Token"
         },
-        "TopicArn": "${vehicleArn}"
+        "TopicArn": "${championArn}"
       },
       "End": true
     }

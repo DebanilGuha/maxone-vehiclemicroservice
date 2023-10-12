@@ -30,7 +30,7 @@ export class StateMachineTriggers {
 
     async stateMachineForwardForReadyForActivation(body: IVehicle, TaskToken: string) {
         try {
-            const prospectCollection = await getCollection('dummyactivation');
+            const prospectCollection = await getCollection('prospect');
             const prospect: mongodb.WithId<Prospect> = (await prospectCollection.findOne({documentStatus:'NotActivated',prospect_id: 'MAX-LO-00601'})) as unknown as mongodb.WithId<Prospect>;
             const toAddForActivation:any = {
                 "champion_id": null,
