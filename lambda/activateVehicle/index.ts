@@ -6,27 +6,36 @@ import { processProspect, processVehicle } from "./processing";
 import { Prospect, Vehicle } from "./models/vehicle.model";
 import * as  AWS from 'aws-sdk';
 import { IVehicle } from "../../types/vehicle";
+import { UniqueIdentifier } from "../../types/uniqueIdentifier";
 const sns = new AWS.SNS();
 
 const ACTIVATION = 'ACTIVATION';
 const activationProcess = async (): Promise<any> => {
-    const vehicleCollection: mongodb.Collection<mongodb.BSON.Document> = await getCollection('vehicles') as unknown as mongodb.Collection<mongodb.BSON.Document>;
-    const prospectCollection: mongodb.Collection<mongodb.BSON.Document> = await getCollection('prospects') as unknown as mongodb.Collection<mongodb.BSON.Document>;
-    const championCollection: mongodb.Collection<mongodb.BSON.Document> = await getCollection('champions') as unknown as mongodb.Collection<mongodb.BSON.Document>;
-    const activationCollection: mongodb.Collection<mongodb.BSON.Document> = await getCollection('dummyactivation') as unknown as mongodb.Collection<mongodb.BSON.Document>;
-    const uniqueIdentifierCounterCollection: mongodb.Collection<mongodb.BSON.Document> = await getCollection('uniqueIdentifierCounter') as unknown as mongodb.Collection<mongodb.BSON.Document>;
+    const vehicleCollection: mongodb.Collection<mongodb.Document> = await getCollection('vehicles') as unknown as mongodb.Collection<mongodb.Document>;
+    const prospectCollection: mongodb.Collection<mongodb.Document> = await getCollection('prospects') as unknown as mongodb.Collection<mongodb.Document>;
+    const championCollection: mongodb.Collection<mongodb.Document> = await getCollection('champions') as unknown as mongodb.Collection<mongodb.Document>;
+    const activationCollection: mongodb.Collection<mongodb.Document> = await getCollection('dummyactivation') as unknown as mongodb.Collection<mongodb.Document>;
+    const uniqueIdentifierCounterCollection: mongodb.Collection<mongodb.Document> = await getCollection('uniqueIdentifierCounter') as unknown as mongodb.Collection<mongodb.Document>;
     let stopLoop = false;
     do {
         try {
             const inc = 1;
-            const collection: any = await uniqueIdentifierCounterCollection.findOneAndUpdate(
-                { _id: new mongodb.ObjectId('activation_id') },
-                {
-                    $inc: { count: inc },
-                },
-                { returnDocument: 'after' },
-            );
-            const incrementedValue: any = collection?.value?.count;
+            const query: any= {
+                _id: 'activation_id',
+              } as mongodb.Filter<UniqueIdentifier>;
+              const update: mongodb.UpdateFilter<UniqueIdentifier> = {
+                $inc: { count: inc },
+              };
+              
+              const options: mongodb.FindOneAndUpdateOptions = {
+                returnDocument: 'after',
+              };
+            const collection = await uniqueIdentifierCounterCollection.findOneAndUpdate(
+                query,
+                update,
+                options
+              ) ;
+            const incrementedValue: any = collection?.count;
             // console.log(`NEW COLLECTION INCREMENT`, collection, 'Value ::-->', incrementedValue);
 
             const activationUpdate: any = await activationCollection.findOneAndUpdate(
@@ -108,7 +117,6 @@ const activationProcess = async (): Promise<any> => {
                         },
                     },
                 );
-                await sendConflictEmail(findVehicle, findProspect, document);
                 console.error('Activation-Conflict');
             }
         } catch (err) {
@@ -177,10 +185,7 @@ async function sendReminderEmail(vehicleData: any, document: any) {
 }
 
 export function checkValidations(findVehicle: any, findProspect: any, activationDocument: any) {
-    if (findVehicle?.pricingTemplate == '' || !findVehicle?.pricingTemplate) {
-        console.warn('Pricing Template Missing From Activation');
-        return false;
-    } else if (!!!activationDocument?.vehicle_id) {
+     if (!!!activationDocument?.vehicle_id) {
         console.warn('VehicleId Missing From Activation');
         return false;
     } else if (!!!activationDocument?.healthInsurance) {
@@ -208,6 +213,7 @@ export const handler: Handler = async (event: any) => {
      
       return response;
     } catch (error: any) {
+        console.error(error);
       return {
         body: JSON.stringify({ message: Error }),
         statusCode: 500,

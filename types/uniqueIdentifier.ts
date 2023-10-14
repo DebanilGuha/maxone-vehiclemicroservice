@@ -1,4 +1,5 @@
-export interface UniqueIdentifier {
+import {Document} from 'mongodb'
+export interface UniqueIdentifier extends Document {
     _id:       string;
     count:     number;
     updatedAt: UpdatedAt;

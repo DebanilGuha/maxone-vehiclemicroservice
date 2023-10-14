@@ -29,24 +29,29 @@ export const handler: Handler = async (event: any,context: Context, callback: Ca
         }
         message[`documentStatus`] = message?.messageInfo?.documentStatus || '';
         delete message['messageInfo'];
+        //Assume:  V1 team get the signal for New send the Vehicle Forward for New
         if(Input?.documentStatus === 'New'){
         console.log(`Entered New`);
           await trigger.stateMachineForwardForNew(message,TaskToken)
         }
+        //Assume:  V1 team get the signal for Inbound send the Vehicle Forward for Inbound
         if(Input?.documentStatus === 'Inbound'){
         console.log(`Entered Inbound`);
           await trigger.stateMachineForwardForInbound(message,TaskToken)
         }
+        //Assume:  V1 team get the signal for ReadyForActivation send the Vehicle Forward for ReadyForActivation
         if(Input?.documentStatus === 'ReadyForActivation'){
         console.log(`Entered ReadyForActivation`);
           await trigger.stateMachineForwardForReadyForActivation(message,TaskToken)
         }
+        //Assume:  V2 team get the signal for Activation and Generate Vehicle For Activation
         if(Input?.documentStatus === 'Activation'){
         console.log(`Entered Activation`);
           await trigger.stateMachineForwardForActivation(message,TaskToken)
         }
         break;
       case 'vams1.0':
+        //Assume:  V1 team send the JSON Forward at first time
         if(message.messageInfo) message.messageInfo.origin = "vams2.0";
         await stepfunctions.startExecution({
           stateMachineArn: stateMachineArn!,

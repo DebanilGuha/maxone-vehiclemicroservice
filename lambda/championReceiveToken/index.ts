@@ -14,19 +14,17 @@ export const handler: Handler = async (event: any,context: Context, callback: Ca
     console.log("SNS",Sns);
     const {Input, TaskToken} = JSON.parse(Sns.Message);
     let message: any = JSON.parse(Sns.Message);
-
-    if(message?.championGeneration == true){
-      
-    }
     console.log("🚀 ~ file: index.ts:14 ~ consthandler:Handler= ~ TaskToken:", TaskToken)
-    
-    
+    console.log("🚀 ~ file: index.ts:16 ~ consthandler:Handler= ~ Input:", Input);
+    if(Input?.championGeneration == true){
+      await trigger.stateMachineForwardForChampion(Input,TaskToken)
+    }    
     callback(null,{status:'CompletedTask'});
     return event;
   } catch (error: any) {
     console.error(error);
     return {
-      body: JSON.stringify({ message: Error }),
+      body: JSON.stringify({ message: error }),
       statusCode: 500,
     };
   }

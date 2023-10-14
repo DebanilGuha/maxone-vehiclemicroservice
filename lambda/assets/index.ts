@@ -84,6 +84,7 @@ export const generateChampionId = async (
   const value = collection?.count;
   console.log("🚀 ~ file: index.ts:60 ~ value:", value);
   vehicleCode.push(value.toString().padStart(5, '0'));
+  console.log("🚀 ~ file: index.ts:87 ~ vehicleCode:", vehicleCode)
   return vehicleCode.join('-');
 };
 
