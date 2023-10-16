@@ -177,8 +177,44 @@
           "BackoffRate": 2
         }
       ],
+      "Next": "SNS Publish for Contracts"
+    },
+    "SNS Publish for Contracts": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
+      "Parameters": {
+        "Message": {
+          "Input.$": "$",
+          "TaskToken.$": "$$.Task.Token"
+        },
+        "TopicArn": "${vehicleArn}"
+      },
+      "Next": "Contract Lambda"
+    },
+    "Contract Lambda": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "${contractCreateOrUpdateArn}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
       "End": true
     }
+
 
   } 
 }

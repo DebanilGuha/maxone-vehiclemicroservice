@@ -1,9 +1,10 @@
 import * as AWS from 'aws-sdk';
 import * as mongodb from 'mongodb'
 import { IVehicle } from '../../types/vehicle';
-import { generateVehicleId, getCollection } from '../assets';
+import { generateContractId, generateVehicleId, getCollection } from '../assets';
 import { UniqueIdentifier } from '../../types/uniqueIdentifier';
 import { Prospect } from '../activateVehicle/models/vehicle.model';
+import { Champion } from '../../types/champion';
 const stepfunctions = new AWS.StepFunctions();
 export class StateMachineTriggers {
     uniqueIdentifierCounterCollection: mongodb.Collection<UniqueIdentifier>;
@@ -31,7 +32,7 @@ export class StateMachineTriggers {
     async stateMachineForwardForReadyForActivation(body: IVehicle, TaskToken: string) {
         try {
             const prospectCollection = await getCollection('prospects');
-            const prospect: mongodb.WithId<Prospect> = (await prospectCollection.findOne({documentStatus:'NotActivated',prospect_id: 'MAX-LO-00601'})) as unknown as mongodb.WithId<Prospect>;
+            const prospect: mongodb.WithId<Prospect> = (await prospectCollection.findOne({documentStatus:'NotActivated',prospect_id: body?.prospect_id})) as unknown as mongodb.WithId<Prospect>;
             const toAddForActivation:any = {
                 "champion_id": null,
                 "champion_uuid_id": null,
@@ -72,6 +73,39 @@ export class StateMachineTriggers {
            
             await stepfunctions.sendTaskSuccess({
                 output: JSON.stringify(body),
+                taskToken: TaskToken
+            }).promise();
+
+        } catch (err) {
+            throw err;
+        }
+    }
+    async stateMachineForwardForContractInitiation(body: Champion, TaskToken: string) {
+        try {
+           const vehicleCollection = await getCollection('vehicles');
+           const prospectCollection = await getCollection('prospects');
+           const uniqueIdentifierCounterCollection = (await getCollection('uniqueIdentifierCounter')) as unknown as mongodb.Collection<UniqueIdentifier>;
+           const vehicleData: mongodb.WithId<IVehicle> = (await vehicleCollection.findOne({vehicle_id: body?.vehicle_id})) as unknown as mongodb.WithId<IVehicle>;
+           const constract_id =await generateContractId(vehicleData?.platformInfo,vehicleData?.vehicleLocation,uniqueIdentifierCounterCollection);
+            const contract = {
+                "contract_id": constract_id,
+                "champion_id": body?.champion_id,
+                "vehicle_id": body?.vehicle_id,
+                "lastUpdateTime": body?.lastUpdateTime,
+                "customer_reference": "4afbbb94-a6cd-4a49-8e69-d74bbd4b7791",
+                "email": body?.championEmailId,
+                "mobile_number": body?.championPhoneNumber,
+                "name": body?.championName,
+                "preferredBanks": [
+                    "232"
+                ],
+                "messageInfo": {
+                    "documentStatus": "ContractInitiated",
+                    "origin": "lams2.0"
+                }
+            }
+            await stepfunctions.sendTaskSuccess({
+                output: JSON.stringify(contract),
                 taskToken: TaskToken
             }).promise();
 

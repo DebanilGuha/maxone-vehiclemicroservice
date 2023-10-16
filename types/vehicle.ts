@@ -35,6 +35,7 @@ export interface IVehicle {
     vehicleStatus: string;
     messageInfo?: MessageInfo;
     messageType: string;
+    prospect_id?:string;
 }
 
 export interface MessageInfo {

@@ -17,7 +17,7 @@ export class StateMachineTriggers {
             const prospectCollection = await getCollection('prospects');
             const uniqueIdentifierCounterCollection = (await getCollection('uniqueIdentifierCounter')) as unknown as mongodb.Collection<UniqueIdentifier>;
             
-            const prospect: mongodb.WithId<Prospect> = (await prospectCollection.findOne({documentStatus:'NotActivated',prospect_id: 'MAX-LO-00601'})) as unknown as mongodb.WithId<Prospect>;
+            const prospect: mongodb.WithId<Prospect> = (await prospectCollection.findOne({documentStatus:'NotActivated',prospect_id: body?.prospect_id})) as unknown as mongodb.WithId<Prospect>;
             const champion_id =await generateChampionId(body?.platformInfo,body?.vehicleLocation,uniqueIdentifierCounterCollection);
             console.log("🚀 ~ file: triggermethods.ts:22 ~ StateMachineTriggers ~ stateMachineForwardForChampion ~ champion_id:", champion_id)
             

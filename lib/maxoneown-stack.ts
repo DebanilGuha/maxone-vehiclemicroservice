@@ -83,6 +83,25 @@ export class MaxoneownStack extends Stack {
         ),
       }
     );
+    const contractCreateOrUpdate = new NodejsFunction(
+      this,
+      "contractCreateOrUpdate",
+      {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        timeout: Duration.seconds(5),
+        environment: {...defaultenv},
+        bundling: {
+          nodeModules: ["mongodb", "ajv", "aws-sdk"],
+          minify: true,
+        },
+        entry: path.join(
+          __dirname,
+          "/../lambda",
+          'contractCreateOrUpdate',
+          'index.ts'
+        ),
+      }
+    );
     const readyForActivationCreateOrUpdate = new NodejsFunction(
       this,
       "readyForActivationCreateOrUpdate",
@@ -217,7 +236,8 @@ export class MaxoneownStack extends Stack {
           championArn: championTopic.topicArn,
           activateVehicle: activateVehicle.functionArn,
           readyForActivationArn: readyForActivationCreateOrUpdate.functionArn,
-          championCreateOrUpdateArn:championCreateOrUpdate.functionArn
+          championCreateOrUpdateArn:championCreateOrUpdate.functionArn,
+          contractCreateOrUpdateArn: contractCreateOrUpdate.functionArn
         },
         roleArn: stepfunction_role.roleArn
       }

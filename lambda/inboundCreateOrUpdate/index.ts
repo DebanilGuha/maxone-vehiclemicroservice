@@ -12,6 +12,7 @@ export const handler: Handler = async (event: any) => {
     const {
       Execution: { Input },
     } = event;
+    console.log("🚀 ~ file: index.ts:14 ~ consthandler:Handler= ~ Input:", Input)
     let response:IVehicle;
     const uniqueIdentifierCounterCollection = (await getCollection('uniqueIdentifierCounter')) as unknown as mongo.Collection<UniqueIdentifier>;
     const collectionVehicle: Collection<Document> = getCollection("vehicles");
@@ -26,7 +27,7 @@ export const handler: Handler = async (event: any) => {
       response = Input
     }
     else{
-      const returnedData : {value: UpdateResult}= (await collectionVehicle.findOneAndUpdate({vehicle_id: Input.vehicle_id},{$set:{...Input,documentStatus:'Inbound'}},options)) as unknown as {value: UpdateResult};
+      const returnedData : {value: UpdateResult}= (await collectionVehicle.findOneAndUpdate({vehicle_id: Input.plateNumber},{$set:{...Input,documentStatus:'Inbound'}},options)) as unknown as {value: UpdateResult};
       console.log("🚀 ~ file: index.ts:26 ~ consthandler:Handler= ~ returnedData:", returnedData)
       response = returnedData as unknown as IVehicle;
     }
@@ -34,6 +35,7 @@ export const handler: Handler = async (event: any) => {
     response = await setForNewExecutiontoSNS(response,'Inbound');
     return response;
   } catch (error: any) {
+    console.error(error);
     return {
       body: JSON.stringify({ message: Error }),
       statusCode: 500,

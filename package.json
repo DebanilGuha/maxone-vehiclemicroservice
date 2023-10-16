@@ -6,6 +6,7 @@
   },
   "scripts": {
     "build": "tsc && cdk synth",
+    "prebuild": "rm -rf cdk.out",
     "deploy": "cdk deploy --all --no-rollback",
     "watch": "tsc -w",
     "test": "jest --detectOpenHandles",
