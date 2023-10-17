@@ -19,14 +19,14 @@ export const handler: Handler = async (event: any): Promise<APIGatewayProxyResul
         const  tokenCollection = (await getCollection('tokenstorage')) as unknown as mongo.Collection<TokenStorage>;
         if(TaskToken){
             const change =  await tokenCollection.updateOne({
-                _id:'movement'
+                _id:'activation'
             },{
                 $set:{token: TaskToken}
             })
         }
         if(!Input){
-            const dummyMovement = (await getCollection('dummymovement'))  as unknown as mongo.Collection<Document>;
-            const insertData = await dummyMovement.insertOne({...body});
+            const dummyactivation = (await getCollection('dummyactivation'))  as unknown as mongo.Collection<Document>;
+            const insertData = await dummyactivation.insertOne({...body});
             console.log("🚀 ~ file: index.ts:29 ~ consthandler:Handler= ~ insertData:", insertData)
             const { token } = (await tokenCollection.findOne({_id:'movement'})) as  mongo.WithId<TokenStorage>;
             console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ token:", token)

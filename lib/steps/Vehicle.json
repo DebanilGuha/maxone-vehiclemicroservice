@@ -105,8 +105,27 @@
           },
         "TopicArn": "${vehicleArn}"
       },
-      "Next": "Vehicle Activation"
+      "Next": "Activation Api"
     },
+    "Activation Api": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::apigateway:invoke.waitForTaskToken",
+      "Parameters": {
+      "ApiEndpoint": "${activationapiurlarn}.execute-api.eu-north-1.amazonaws.com",
+      "Method": "POST",
+      "Stage": "prod",
+      "Path": "activation",
+      "RequestBody": {
+        "Input.$": "$",
+        "TaskToken.$": "$$.Task.Token"
+      }
+      },
+      "ResultSelector": {
+      "$": "$.ResponseBody"
+      },
+      "ResultPath": "$",
+      "Next": "Vehicle Activation"
+      },
     "Vehicle Activation": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
@@ -224,17 +243,31 @@
         },
         "TopicArn": "${vehicleArn}"
       },
-      "Next": "Movement Addition Api"
+      "Next": "Choice for Payment"
+    },
+    "Choice for Payment": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.messageInfo.documentStatus",
+          "StringEquals": "PaymentReceived",
+          "Next": "Contract Lambda"
+        }
+      ],
+      "Default": "Movement Addition Api"
     },
     "Movement Addition Api": {
       "Type": "Task",
       "Resource": "arn:aws:states:::apigateway:invoke.waitForTaskToken",
       "Parameters": {
-      "ApiEndpoint": "${apiurlarn}",
+      "ApiEndpoint": "${apiurlarn}.execute-api.eu-north-1.amazonaws.com",
       "Method": "POST",
-      "Stage": "default",
+      "Stage": "prod",
       "Path": "movement",
-      "AuthType": "IAM_ROLE"
+      "RequestBody": {
+        "Input.$": "$",
+        "TaskToken.$": "$$.Task.Token"
+      }
       },
       "ResultSelector": {
       "$": "$.ResponseBody"

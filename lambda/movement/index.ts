@@ -10,7 +10,7 @@ import { MOVEMENT_TYPES } from "./constant";
 
 export const handler: Handler = async (event: any) => {
     const checkArray: any = MOVEMENT_TYPES;
-    const movementCollection: any = await getCollection('movements');
+    const movementCollection: any = await getCollection('dummymovement');
     const uniqueIdentifierCounterCollection: any = await getCollection('uniqueIdentifierCounter');
     const movementDocuments: any[] = await movementCollection
         .find({ documentStatus: { $in: checkArray } })

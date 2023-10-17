@@ -36,11 +36,8 @@ function checkGraduateAndNormalData(
             maintenanceCondition: checkMaintainenceStatus,
         });
         if (
-            vehicleData?.documentStatus === 'ReadyForPickUp' &&
-            prospectData?.documentStatus === 'ActivatedButNotCheckedOut' &&
             activationData?.contractStatus === 'ContractInitiated' &&
-            paymentToDo === 'Complete' &&
-            checkMaintainenceStatus
+            paymentToDo === 'Complete'
         ) {
             return true;
         } else {

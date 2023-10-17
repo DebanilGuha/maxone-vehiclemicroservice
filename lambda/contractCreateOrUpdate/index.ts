@@ -17,7 +17,7 @@ export const handler: Handler = async function (event: any) {
         }
         const contract: any = message;
         console.log("🚀 ~ file: index.ts:19 ~ contract:", contract)
-        if (contract?.messageInfo?.documentStatus === 'ContractInitiated') {
+        if (contract?.messageInfo?.documentStatus === 'ContractInitiated' || message?.messageInfo?.documentStatus === 'PaymentReceived') {
             event = await updateActivation(contract);
         } else if (
             contract?.messageInfo?.documentStatus === 'ContractActivated' ||
@@ -111,9 +111,13 @@ const updateActivation = async (message: any) => {
     if (message?.contract_id) {
         contractUpdate['contract_id'] = message?.contract_id;
     }
+
     if (message?.messageInfo?.documentStatus === 'PaymentReceived') {
         contractUpdate['paymentStatus'] = message?.paymentStatus;
         contractUpdate['paymentInfo'] = message?.paymentInfo;
+        message.messageInfo.documentStatus = 'PaymentComplete';
+    }else{
+    message.messageInfo.documentStatus = 'ContractInitiationComplete';
     }
     console.warn("Contract to Update", contractUpdate);
     await activationCollection.updateOne({
@@ -122,6 +126,5 @@ const updateActivation = async (message: any) => {
     }, {
         $set: contractUpdate
     });
-    message.messageInfo.documentStatus = 'ContractInitiationComplete';
     return message;
 };

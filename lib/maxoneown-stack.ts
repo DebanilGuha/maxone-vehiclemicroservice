@@ -28,6 +28,7 @@ export class MaxoneownStack extends Stack {
     stepfunction_role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSLambda_FullAccess'));
     stepfunction_role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSStepFunctionsFullAccess'));
     stepfunction_role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSNSFullAccess'));
+    stepfunction_role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonAPIGatewayInvokeFullAccess'));
 
     const newCreateOrUpdate = new NodejsFunction(
       this,
@@ -268,7 +269,22 @@ export class MaxoneownStack extends Stack {
         entry: path.join(
           __dirname,
           "/../lambda",
-          'movementapiFunction',
+          'movementapi',
+          'index.ts'
+        ),
+      }
+    );
+    const activationapiFunction = new NodejsFunction(
+      this,
+      "activationapiFunction",
+      {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        timeout: Duration.seconds(5),
+        environment: {...defaultenv},
+        entry: path.join(
+          __dirname,
+          "/../lambda",
+          'activationapi',
           'index.ts'
         ),
       }
@@ -278,9 +294,31 @@ export class MaxoneownStack extends Stack {
       restApiName:'movement',
       description:'Api regarding movement'
     });
+    const activationApi = new api.RestApi(this,'ActivationApi',{
+      restApiName:'activation',
+      description:'Api regarding movement'
+    });
     const lambdaintegration = new api.LambdaIntegration(movementapiFunction);
-    movementApi.root.addMethod('POST',lambdaintegration);
+    const lambdaintegrationActivation = new api.LambdaIntegration(activationapiFunction);
+    const vehicleMovement = movementApi.root.addResource('movement');
+    const activationResource = movementApi.root.addResource('activation');
+    
+    vehicleMovement.addMethod('POST',lambdaintegration);
+    activationResource.addMethod('POST',lambdaintegrationActivation);
 
+
+    const policyStatement = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['states:SendTaskSuccess', 'states:SendTaskFailure'],
+    });
+
+    stepfunction_role.addToPolicy(new iam.PolicyStatement({
+      actions: ['execute-api:Invoke'],
+      resources: [movementApi.arnForExecuteApi(),activationApi.arnForExecuteApi()], // This gives permission to invoke any method, resource, and stage in the API. Adjust as necessary.
+      }));
+    
+    policyStatement.addAllResources();
+    movementapiFunction.addToRolePolicy(policyStatement);
 
     const vams3MaxOneStateMachine = new sfn.CfnStateMachine(
       this,
@@ -298,7 +336,8 @@ export class MaxoneownStack extends Stack {
           contractCreateOrUpdateArn: contractCreateOrUpdate.functionArn,
           movementArn:movement.functionArn,
           pickUpVehicleArn: pickUpVehicle.functionArn,
-          apiurlarn: movementApi.url
+          apiurlarn: movementApi.restApiId,
+          activationapiurlarn: activationApi.restApiId
         },
         roleArn: stepfunction_role.roleArn
       }
