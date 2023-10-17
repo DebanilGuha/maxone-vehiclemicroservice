@@ -28,7 +28,8 @@ export const handler: Handler = async (event: any) => {
                 },
                 { returnDocument: 'after' },
             );
-            const incrementedValue: any = collection?.value?.count;
+            console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ collection:", collection)
+            const incrementedValue: any = collection?.count;
             await movementCollection.updateOne(
                 {
                     _id: new mongodb.ObjectId(document?._id),
