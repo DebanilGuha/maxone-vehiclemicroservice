@@ -18,7 +18,7 @@ export const handler: Handler = async function (event: any) {
         const contract: any = message;
         console.log("🚀 ~ file: index.ts:19 ~ contract:", contract)
         if (contract?.messageInfo?.documentStatus === 'ContractInitiated') {
-            await updateActivation(contract);
+            event = await updateActivation(contract);
         } else if (
             contract?.messageInfo?.documentStatus === 'ContractActivated' ||
             contract?.messageInfo?.documentStatus === 'V1ContractCreated'
@@ -30,9 +30,9 @@ export const handler: Handler = async function (event: any) {
         return event;
     } catch (err) {
         console.error(err);
+        return false;
     }
 
-    return true;
 };
 
 const updateVehicle = async (message: any) => {
@@ -71,52 +71,57 @@ const updateVehicle = async (message: any) => {
             lastUpdateTime: new Date().toISOString(),
             messageType: 'contract_info_updated',
         };
-        
+
         console.log('End of updateVehicle in contractCreateOrUpdate');
+        message.messageInfo.documentStatus = 'ContractActivationComplete';
+        return message;
     } catch (e: any) {
         console.error({ ErrorMessage: 'Could not complete find operation', Error: e });
+        throw e;
     }
 };
 
 const updateActivation = async (message: any) => {
     const activationCollection: any = await getCollection("dummyactivation");
-  let findActivation;
-  try {
-    findActivation = await activationCollection.findOne(
-      {
-        $and: [
-          {
-            $or: [
-              { champion_id: { $eq: message?.champion_id } },
-              { vehicle_id: { $eq: message?.vehicle_id } }
-            ],
-          },
-          { documentStatus: { $eq: 'ReadyForPickUp' } }
-        ]
-      }
-    );
-  } catch (e) {
-    throw "Could not complete find operation";
-  }
+    let findActivation;
+    try {
+        findActivation = await activationCollection.findOne(
+            {
+                $and: [
+                    {
+                        $or: [
+                            { champion_id: { $eq: message?.champion_id } },
+                            { vehicle_id: { $eq: message?.vehicle_id } }
+                        ],
+                    },
+                    { documentStatus: { $eq: 'ReadyForPickUp' } }
+                ]
+            }
+        );
+    } catch (e) {
+        throw "Could not complete find operation";
+    }
 
-  if (!findActivation) {
-    throw "No activation record found";
-  }
-  const contractUpdate: any = {
-    contractStatus: "ContractInitiated",
-  };
-  if(message?.contract_id){
-    contractUpdate['contract_id'] = message?.contract_id;
-  }
-  if(message?.messageInfo?.documentStatus === 'PaymentReceived'){
-    contractUpdate['paymentStatus'] = message?.paymentStatus;
-    contractUpdate['paymentInfo'] = message?.paymentInfo;
-  }
-  console.warn("Contract to Update",contractUpdate);
+    if (!findActivation) {
+        throw "No activation record found";
+    }
+    const contractUpdate: any = {
+        contractStatus: "ContractInitiated",
+    };
+    if (message?.contract_id) {
+        contractUpdate['contract_id'] = message?.contract_id;
+    }
+    if (message?.messageInfo?.documentStatus === 'PaymentReceived') {
+        contractUpdate['paymentStatus'] = message?.paymentStatus;
+        contractUpdate['paymentInfo'] = message?.paymentInfo;
+    }
+    console.warn("Contract to Update", contractUpdate);
     await activationCollection.updateOne({
-      activation_id: findActivation?.activation_id,
-      vehicle_id: message?.vehicle_id
+        activation_id: findActivation?.activation_id,
+        vehicle_id: message?.vehicle_id
     }, {
-      $set: contractUpdate
+        $set: contractUpdate
     });
+    message.messageInfo.documentStatus = 'ContractInitiationComplete';
+    return message;
 };

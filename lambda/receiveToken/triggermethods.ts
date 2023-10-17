@@ -80,6 +80,32 @@ export class StateMachineTriggers {
             throw err;
         }
     }
+    async stateMachineForwardForPayment(body: Champion, TaskToken: string) {
+        try {
+            const vehicleCollection = await getCollection('vehicles');
+            const prospectCollection = await getCollection('prospects');
+            const vehicleData: mongodb.WithId<IVehicle> = (await vehicleCollection.findOne({vehicle_id: body?.vehicle_id})) as unknown as mongodb.WithId<IVehicle>;
+            const payment = {
+                "champion_id": body?.champion_id,
+                "champion_uuid_id": body?.champion_uuid_id,
+                "vehicle_id": body?.vehicle_id,
+                "lastUpdateTime": "Sun Oct 15 2023 20:07:54 GMT+0000 (Coordinated Universal Time)",
+                "paymentStatus": "Complete",
+                "paymentInfo": "Received 2000.00 as Advance Payment",
+                "messageInfo": {
+                    "documentStatus": "PaymentReceived",
+                    "origin": "vams2.0"
+                }
+            };
+            await stepfunctions.sendTaskSuccess({
+                output: JSON.stringify(payment),
+                taskToken: TaskToken
+            }).promise();
+
+        } catch (err) {
+            throw err;
+        }
+    }
     async stateMachineForwardForContractInitiation(body: Champion, TaskToken: string) {
         try {
            const vehicleCollection = await getCollection('vehicles');
@@ -90,6 +116,7 @@ export class StateMachineTriggers {
             const contract = {
                 "contract_id": constract_id,
                 "champion_id": body?.champion_id,
+                "champion_uuid_id": body?.champion_uuid_id,
                 "vehicle_id": body?.vehicle_id,
                 "lastUpdateTime": body?.lastUpdateTime,
                 "customer_reference": "4afbbb94-a6cd-4a49-8e69-d74bbd4b7791",

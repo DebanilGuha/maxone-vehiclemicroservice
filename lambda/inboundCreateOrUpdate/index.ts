@@ -27,7 +27,7 @@ export const handler: Handler = async (event: any) => {
       response = Input
     }
     else{
-      const returnedData : {value: UpdateResult}= (await collectionVehicle.findOneAndUpdate({vehicle_id: Input.plateNumber},{$set:{...Input,documentStatus:'Inbound'}},options)) as unknown as {value: UpdateResult};
+      const returnedData : {value: UpdateResult}= (await collectionVehicle.findOneAndUpdate({plateNumber: Input?.plateNumber},{$set:{...Input,documentStatus:'Inbound'}},options)) as unknown as {value: UpdateResult};
       console.log("🚀 ~ file: index.ts:26 ~ consthandler:Handler= ~ returnedData:", returnedData)
       response = returnedData as unknown as IVehicle;
     }

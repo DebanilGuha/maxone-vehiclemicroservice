@@ -22,6 +22,18 @@ export const handler: Handler = async (event: any, context: Context, callback: C
     const stateMachineArn = process.env.STATE_MACHINE_ARN;
     console.log(`ForSwitch -->`, message?.messageInfo?.origin);
     switch (message?.messageInfo?.origin) {
+      case 'lams2.0':
+        console.log('Entered lams2.0');
+        const validateC = await validateSchema('contracts');
+        if (!validateC) {
+          throw 'Vehicles are not perfect schema';
+        }
+        if (Input?.messageInfo?.documentStatus === 'ContractInitiationComplete') {
+          console.log(`Entered PaymentReceived`);
+          const championMessage: Champion = message as unknown as Champion;
+          await trigger.stateMachineForwardForPayment(championMessage, TaskToken);
+        }
+        break;
       case 'vams2.0':
         console.log(`Entered Vams2.0`);
         const validate = await validateSchema('vehicles');
@@ -55,6 +67,7 @@ export const handler: Handler = async (event: any, context: Context, callback: C
           const championMessage: Champion = message as unknown as Champion;
           await trigger.stateMachineForwardForContractInitiation(championMessage, TaskToken)
         }
+        
         break;
       case 'vams1.0':
         //Assume:  V1 team send the JSON Forward at first time

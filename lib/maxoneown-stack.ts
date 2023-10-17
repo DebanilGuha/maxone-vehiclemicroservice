@@ -5,6 +5,7 @@ import * as subs from 'aws-cdk-lib/aws-sns-subscriptions';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as fs from "fs";
 import * as sfn from "aws-cdk-lib/aws-stepfunctions";
+import * as api from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as path from "path";
 import { Construct } from 'constructs';
@@ -102,6 +103,40 @@ export class MaxoneownStack extends Stack {
         ),
       }
     );
+
+      //Movement Data
+    const movement = new NodejsFunction(
+      this,
+      "movement",
+      {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        timeout: Duration.seconds(5),
+        environment: {...defaultenv},
+        entry: path.join(
+          __dirname,
+          "/../lambda",
+          'movement',
+          'index.ts'
+        ),
+      }
+    );
+    const pickUpVehicle = new NodejsFunction(
+      this,
+      "pickUpVehicle",
+      {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        timeout: Duration.seconds(5),
+        environment: {...defaultenv},
+        entry: path.join(
+          __dirname,
+          "/../lambda",
+          'pickUpVehicle',
+          'index.ts'
+        ),
+      }
+    );
+
+
     const readyForActivationCreateOrUpdate = new NodejsFunction(
       this,
       "readyForActivationCreateOrUpdate",
@@ -205,13 +240,13 @@ export class MaxoneownStack extends Stack {
     const vehicleTopic = new sns.Topic(this, 'VehicleTopic', {
       displayName: 'My SNS Vehicle Topic',
       fifo: false,
-      topicName: 'Vehicle'
+      topicName: 'Vehicle1'
     });
     
     const championTopic = new sns.Topic(this, 'ChampionTopic', {
       displayName: 'My SNS Vehicle Topic',
       fifo: false,
-      topicName: 'Champion'
+      topicName: 'Champion1'
     });
 
     vehicleTopic.addSubscription(new subscriptions.LambdaSubscription(receiveToken));
@@ -223,10 +258,33 @@ export class MaxoneownStack extends Stack {
       path.join(__dirname, "/../lib/steps/Vehicle.json")
     );
 
+    const movementapiFunction = new NodejsFunction(
+      this,
+      "movementapiFunction",
+      {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        timeout: Duration.seconds(5),
+        environment: {...defaultenv},
+        entry: path.join(
+          __dirname,
+          "/../lambda",
+          'movementapiFunction',
+          'index.ts'
+        ),
+      }
+    );
+
+    const movementApi = new api.RestApi(this,'MovementApi',{
+      restApiName:'movement',
+      description:'Api regarding movement'
+    });
+    const lambdaintegration = new api.LambdaIntegration(movementapiFunction);
+    movementApi.root.addMethod('POST',lambdaintegration);
+
 
     const vams3MaxOneStateMachine = new sfn.CfnStateMachine(
       this,
-      "VAMS3MaxOneStateMachine",
+      "VAMS3.0MaxOneStateMachine",
       {
         definitionString: file.toString(),
         definitionSubstitutions: {
@@ -237,7 +295,10 @@ export class MaxoneownStack extends Stack {
           activateVehicle: activateVehicle.functionArn,
           readyForActivationArn: readyForActivationCreateOrUpdate.functionArn,
           championCreateOrUpdateArn:championCreateOrUpdate.functionArn,
-          contractCreateOrUpdateArn: contractCreateOrUpdate.functionArn
+          contractCreateOrUpdateArn: contractCreateOrUpdate.functionArn,
+          movementArn:movement.functionArn,
+          pickUpVehicleArn: pickUpVehicle.functionArn,
+          apiurlarn: movementApi.url
         },
         roleArn: stepfunction_role.roleArn
       }

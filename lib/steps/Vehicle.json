@@ -212,6 +212,89 @@
           "BackoffRate": 2
         }
       ],
+      "Next": "SNS Publish CheckForPayment"
+    },
+    "SNS Publish CheckForPayment": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
+      "Parameters": {
+        "Message": {
+          "Input.$": "$",
+          "TaskToken.$": "$$.Task.Token"
+        },
+        "TopicArn": "${vehicleArn}"
+      },
+      "Next": "Movement Addition Api"
+    },
+    "Movement Addition Api": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::apigateway:invoke.waitForTaskToken",
+      "Parameters": {
+      "ApiEndpoint": "${apiurlarn}",
+      "Method": "POST",
+      "Stage": "default",
+      "Path": "movement",
+      "AuthType": "IAM_ROLE"
+      },
+      "ResultSelector": {
+      "$": "$.ResponseBody"
+      },
+      "ResultPath": "$",
+      "Next": "Movement"
+      },
+    "Movement": {
+      "Type": "Task",
+      "Resource": "${movementArn}",
+      "OutputPath": "$",
+      "Parameters": {
+        "$": "$",
+        "FunctionName": "${movementArn}",
+        "Payload": {
+          "callback": "true"
+        }
+      },
+      "Next": "Map"
+    },
+    "Map": {
+      "Type": "Map",
+      "InputPath": "$.allDocument",
+      "ResultPath": "$.allDocument.array",
+      "ItemProcessor": {
+        "ProcessorConfig": {
+          "Mode": "INLINE"
+        },
+        "StartAt": "ChoiceMovement",
+        "States": {
+          "ChoiceMovement": {
+            "Type": "Choice",
+            "Choices": [
+              {
+                "Variable": "$.movementType",
+                "StringEquals": "PickUp",
+                "Next": "PickUp"
+              }
+            ]
+          },
+          "PickUp": {
+            "Type": "Task",
+            "Resource": "${pickUpVehicleArn}",
+            "End": true,
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "States.TaskFailed",
+                  "Lambda.TooManyRequestsException"
+                ],
+                "BackoffRate": 1,
+                "IntervalSeconds": 6,
+                "MaxAttempts": 10
+              }
+            ]
+          }
+        }
+      },
+      "ItemsPath": "$.array",
+      "MaxConcurrency": 100,
       "End": true
     }
 

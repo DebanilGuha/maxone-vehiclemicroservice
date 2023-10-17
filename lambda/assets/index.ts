@@ -3,6 +3,7 @@ const { MongoClient } = mongo;
 import Ajv from "ajv";
 import { IVehicle } from "../../types/vehicle";
 import { UniqueIdentifier } from "../../types/uniqueIdentifier";
+import { Champion } from "../../types/champion";
 const ajv = new Ajv({ allErrors: true });
 
 type CollectionName = string;
@@ -124,7 +125,7 @@ export function setForNewExecutiontoSNS(body: IVehicle,status:string) {
   };
   return body;
 }
-export function restructureResponseForSNS(body: IVehicle,status:string) {
+export function restructureResponseForSNS(body: any,status:string) {
   body.messageInfo = {
       documentStatus:  status,
       origin: 'vams2.0'
