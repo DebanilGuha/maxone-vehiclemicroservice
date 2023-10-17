@@ -28,7 +28,7 @@ export const handler: Handler = async (event: any): Promise<APIGatewayProxyResul
             const dummyactivation = (await getCollection('dummyactivation'))  as unknown as mongo.Collection<Document>;
             const insertData = await dummyactivation.insertOne({...body});
             console.log("🚀 ~ file: index.ts:29 ~ consthandler:Handler= ~ insertData:", insertData)
-            const { token } = (await tokenCollection.findOne({_id:'movement'})) as  mongo.WithId<TokenStorage>;
+            const { token } = (await tokenCollection.findOne({_id:'activation'})) as  mongo.WithId<TokenStorage>;
             console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ token:", token)
             if(insertData?.acknowledged){
                 await stepfunctions.sendTaskSuccess({

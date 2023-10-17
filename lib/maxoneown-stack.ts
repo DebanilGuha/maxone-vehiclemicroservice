@@ -296,12 +296,12 @@ export class MaxoneownStack extends Stack {
     });
     const activationApi = new api.RestApi(this,'ActivationApi',{
       restApiName:'activation',
-      description:'Api regarding movement'
+      description:'Api regarding activation'
     });
     const lambdaintegration = new api.LambdaIntegration(movementapiFunction);
     const lambdaintegrationActivation = new api.LambdaIntegration(activationapiFunction);
     const vehicleMovement = movementApi.root.addResource('movement');
-    const activationResource = movementApi.root.addResource('activation');
+    const activationResource = activationApi.root.addResource('activation');
     
     vehicleMovement.addMethod('POST',lambdaintegration);
     activationResource.addMethod('POST',lambdaintegrationActivation);
@@ -319,6 +319,7 @@ export class MaxoneownStack extends Stack {
     
     policyStatement.addAllResources();
     movementapiFunction.addToRolePolicy(policyStatement);
+    activationapiFunction.addToRolePolicy(policyStatement);
 
     const vams3MaxOneStateMachine = new sfn.CfnStateMachine(
       this,

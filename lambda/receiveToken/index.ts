@@ -33,6 +33,11 @@ export const handler: Handler = async (event: any, context: Context, callback: C
           const championMessage: Champion = message as unknown as Champion;
           await trigger.stateMachineForwardForPayment(championMessage, TaskToken);
         }
+        if (Input?.messageInfo?.documentStatus === 'PaymentComplete') {
+          console.log(`Entered PaymentReceived`);
+          const championMessage: Champion = message as unknown as Champion;
+          await trigger.stateMachineForwardForPaymentComplete(championMessage, TaskToken);
+        }
         break;
       case 'vams2.0':
         console.log(`Entered Vams2.0`);

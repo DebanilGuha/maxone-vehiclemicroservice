@@ -69,7 +69,7 @@ export class StateMachineTriggers {
                 "paymentInfo": "Received 2000.00 as Advance Payment",
                 "messageInfo": {
                     "documentStatus": "PaymentReceived",
-                    "origin": "vams2.0"
+                    "origin": "lams2.0"
                 }
             };
             await stepfunctions.sendTaskSuccess({
@@ -121,6 +121,19 @@ export class StateMachineTriggers {
         try {
             
             body.documentStatus = 'New';
+            await stepfunctions.sendTaskSuccess({
+                output: JSON.stringify(body),
+                taskToken: TaskToken
+            }).promise();
+
+        } catch (err) {
+            throw err;
+        }
+    }
+    async stateMachineForwardForPaymentComplete(body: Champion, TaskToken: string) {
+        try {
+            
+            body.documentStatus = 'PaymentComplete';
             await stepfunctions.sendTaskSuccess({
                 output: JSON.stringify(body),
                 taskToken: TaskToken

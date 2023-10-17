@@ -120,10 +120,8 @@
         "TaskToken.$": "$$.Task.Token"
       }
       },
-      "ResultSelector": {
-      "$": "$.ResponseBody"
-      },
-      "ResultPath": "$",
+      
+      "ResultPath": "$.ResponseBody",
       "Next": "Vehicle Activation"
       },
     "Vehicle Activation": {
@@ -269,10 +267,7 @@
         "TaskToken.$": "$$.Task.Token"
       }
       },
-      "ResultSelector": {
-      "$": "$.ResponseBody"
-      },
-      "ResultPath": "$",
+      "ResultPath": "$.ResponseBody",
       "Next": "Movement"
       },
     "Movement": {

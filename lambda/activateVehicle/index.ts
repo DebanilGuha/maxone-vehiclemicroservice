@@ -62,6 +62,7 @@ const activationProcess = async (): Promise<any> => {
             const findVehicle: Vehicle = (await vehicleCollection.findOne({
                 vehicle_id: { $eq: document?.vehicle_id },
             })) as unknown as Vehicle;
+            
             const findProspect: Prospect = (await prospectCollection.findOne({
                 prospect_id: { $eq: document?.prospect_id },
             })) as unknown as Prospect;
@@ -102,9 +103,9 @@ const activationProcess = async (): Promise<any> => {
                 //Call cancel Parent Activation method
                 //If parent activation id is not null then call this method
                 
-                await sendReminderEmail(findVehicle, document);
                 console.log('Activation Completed for the lambda ');
-                return 'Activation Completed for the lambda';
+                console.log("🚀 ~ file: index.ts:65 ~ activationProcess ~ findVehicle:", findVehicle);
+                return {findVehicle,activationData:'Activation Completed for the lambda'};
             } else {
                 await activationCollection.updateOne(
                     {
@@ -141,22 +142,7 @@ async function sendConflictEmail(vehicleData: any, prospectData: any, document: 
     vehicle type: \t${prospectData?.vehicleOfInterest || ''}, 
     Plate number: \t${vehicleData?.plateNumber || ''}.
     `;
-    const conflictParam: any = {
-        Message: message,
-        TopicArn: process.env.EXCEPTION_SNS,
-        Subject: `Activation Conflict`,
-    };
-    await sns
-        .publish(conflictParam)
-        .promise()
-        .then((data: any) => {
-            console.log('Activation Conflict Message ID', data, 'has been sent');
-            return;
-        })
-        .catch((err: any) => {
-            console.error(err, err.stack);
-            return;
-        });
+    
 }
 
 async function sendReminderEmail(vehicleData: any, document: any) {
@@ -171,17 +157,7 @@ async function sendReminderEmail(vehicleData: any, document: any) {
         TopicArn: process.env.REMINDEREMAIL_SNS,
         Subject: `Activation Successful-${vehicleData?.vehicle_id || ''}`,
     };
-    await sns
-        .publish(conflictParam)
-        .promise()
-        .then((data: any) => {
-            console.log('Activation Success Email Message ID', data, 'has been sent');
-            return;
-        })
-        .catch((err: any) => {
-            console.error(err, err.stack);
-            return;
-        });
+   
 }
 
 export function checkValidations(findVehicle: any, findProspect: any, activationDocument: any) {
@@ -206,10 +182,10 @@ export function checkValidations(findVehicle: any, findProspect: any, activation
 export const handler: Handler = async (event: any) => {
     try {
       console.log("event 👉", event);
-     const activationData = await activationProcess();
+     const {vehicle,activationData} = await activationProcess();
       let response:object;
-      response = activationData === "Activation Completed for the lambda" ? {championGeneration: true,...event} : {championGeneration: false,...event};
-      
+      response = activationData === "Activation Completed for the lambda" ? {championGeneration: true,...event} : {championGeneration: false,...vehicle};
+     
      
       return response;
     } catch (error: any) {

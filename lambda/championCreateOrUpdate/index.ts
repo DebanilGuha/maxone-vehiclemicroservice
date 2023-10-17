@@ -28,10 +28,11 @@ export const handler: Handler = async (event: any) => {
         const championSNSData = championMessage;
         console.log("🚀 ~ file: index.ts:35 ~ consthandler:Handler= ~ championSNSData:", championSNSData)
         // delete championSNSData['messageInfo'];
-        findChampion = await championCollection.findOne({ champion_id: { $eq: championSNSData?.champion_id } });
+        findChampion = await championCollection.findOne({ champion_id: { $eq: (championSNSData?.champion_id).trim() } });
         console.log("🚀 ~ file: index.ts:38 ~ consthandler:Handler= ~ findChampion:", findChampion)
         if (!findChampion) {
             await championCollection.insertOne(championSNSData);
+            console.log('champion is inserted');
         } else {
             await championCollection.updateOne(
                 { champion_id: championSNSData?.champion_id },
@@ -49,8 +50,7 @@ export const handler: Handler = async (event: any) => {
         try {
             findActivation = await activationCollection.findOne({
                 $and: [
-                    { prospect_id: championMessage?.prospect_id },
-                    { vehicle_id: championMessage?.vehicle_id },
+                    { vehicle_id: (championSNSData?.vehicle_id).trim() },
                     { documentStatus: { $ne: 'ActivationCancelled' } },
                 ],
             });
@@ -89,7 +89,7 @@ export const handler: Handler = async (event: any) => {
         return {contractInitiation:true,...restructureResponseForSNS(championSNSData,'ContractInitiation')};
     } catch (e: any) {
         console.error(e);
-        return {contractInitiation:false,...e};
+        return {contractInitiation:false,e};
 
     }
     return 'Champion added';
