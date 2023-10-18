@@ -2,31 +2,20 @@ import * as AWS from 'aws-sdk';
 import * as mongodb from 'mongodb'
 import { IVehicle } from '../../types/vehicle';
 import { generateContractId, generateVehicleId, getCollection } from '../assets';
-import { UniqueIdentifier } from '../../types/uniqueIdentifier';
+import { TokenStorage, UniqueIdentifier } from '../../types/uniqueIdentifier';
 import { Prospect } from '../activateVehicle/models/vehicle.model';
 import { Champion } from '../../types/champion';
 const stepfunctions = new AWS.StepFunctions();
 export class StateMachineTriggers {
     uniqueIdentifierCounterCollection: mongodb.Collection<UniqueIdentifier>;
+    tokenCollection: mongodb.Collection<TokenStorage>;
     constructor() {
-
+       this.initializeCollection();
     }
-    async stateMachineForwardForNew(body: IVehicle, TaskToken: string) {
-        try {
-            if (!this.checkValidationForInbound(body)) {
-                throw 'Not Complying to New';
-            }
-            body.documentStatus = 'ReadyForActivation';
-            await stepfunctions.sendTaskSuccess({
-                output: JSON.stringify(body),
-                taskToken: TaskToken
-            }).promise();
-            console.log('New Added');
-
-        } catch (err) {
-            throw err;
-        }
+    private async initializeCollection(){
+        this.tokenCollection = (await getCollection('tokenstorage')) as unknown as mongodb.Collection<TokenStorage>;
     }
+    
 
 
     async stateMachineForwardForReadyForActivation(body: IVehicle, TaskToken: string) {
@@ -119,12 +108,39 @@ export class StateMachineTriggers {
 
     async stateMachineForwardForInbound(body: IVehicle, TaskToken: string) {
         try {
+            TaskToken = !TaskToken ? await this.getTokenFromStorage('vehicle_id','token') : TaskToken;
+            console.log("this.checkValidationForInboundToNew(body):", this.checkValidationForInboundToNew(body))
+            if(this.checkValidationForInboundToNew(body)){
+                body.documentStatus = 'New';
+                await stepfunctions.sendTaskSuccess({
+                    output: JSON.stringify(body),
+                    taskToken: TaskToken
+                }).promise();
+            }else{
+                await this.addTokenToStorage('vehicle_id',TaskToken,'token');
+            }
             
-            body.documentStatus = 'New';
-            await stepfunctions.sendTaskSuccess({
-                output: JSON.stringify(body),
-                taskToken: TaskToken
-            }).promise();
+
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async stateMachineForwardForNew(body: IVehicle, TaskToken: string) {
+        try {
+            console.log(" this.checkValidationForNewToReadyForActivation(body):", this.checkValidationForNewToReadyForActivation(body))
+            if (this.checkValidationForNewToReadyForActivation(body)) {
+                TaskToken = !TaskToken ? await this.getTokenFromStorage('vehicle_id','tokennew') : TaskToken;
+                body.documentStatus = 'ReadyForActivation';
+                await stepfunctions.sendTaskSuccess({
+                    output: JSON.stringify(body),
+                    taskToken: TaskToken
+                }).promise();
+                console.log('New Added');
+            }else{
+                await this.addTokenToStorage('vehicle_id',TaskToken,'tokennew');
+            }
+            throw 'Not Complying to New';
 
         } catch (err) {
             throw err;
@@ -144,11 +160,68 @@ export class StateMachineTriggers {
         }
     }
 
-    private checkValidationForInbound(body: IVehicle) {
-        if (!body?.vehicleType) {
+    private checkValidationForInboundToNew(body: IVehicle) {
+        console.log("body?.serviceType:", !!body?.serviceType)
+        if (!body?.serviceType) {
+            console.log("body?.serviceType  Entered:", !!body?.serviceType)
+            return false;
+        }
+        console.log(" body?.financierInfo Outside:", !!body?.financierInfo);
+
+        if (!body?.financierInfo) {
+            console.log(" body?.financierInfo  Entered:", !!body?.financierInfo);
+            return false;
+        }
+        console.log("body?.platformInfo Outside:", !!body?.platformInfo);
+
+        if (!body?.platformInfo) {
+            console.log("body?.platformInfo  Entered:", !!body?.platformInfo);
+            return false;
+        }
+        console.log("body?.device_IMEI Outside:", !!body?.device_IMEI)
+
+        if (!body?.device_IMEI) {
+            console.log("body?.device_IMEI  Entered:", !!body?.device_IMEI)
+            return false;
+        }
+        console.log("body?.SIM_serialNo Outside:", !!body?.SIM_serialNo);
+        if (!body?.SIM_serialNo) {
+            console.log("body?.SIM_serialNo  Entered:", !!body?.SIM_serialNo);
+            return false;
+        }
+        console.log("body?.phoneNumber Outside:", !!body?.phoneNumber);
+        if (!body?.phoneNumber) {
+            console.log("body?.phoneNumber  Entered:", !!body?.phoneNumber);
+            return false;
+        }
+        
+        return true;
+    }
+
+    private checkValidationForNewToReadyForActivation(body: IVehicle) {
+        if (!body?.pricingTemplate) {
+            console.log("body?.pricingTemplate:", !!body?.pricingTemplate);
             return false;
         }
         return true;
+    }
+
+    private async addTokenToStorage (collectionType:string,TaskToken:string,tokenname:string){
+        if(TaskToken){
+            const json : any={}
+            json[tokenname] = TaskToken
+            const change =  await this.tokenCollection.updateOne({
+                _id:collectionType
+            },{
+                $set:json
+            })
+        }
+    }
+
+    private async getTokenFromStorage(collectionType:string,tokenname:string){
+        const token = (await this.tokenCollection.findOne({_id: collectionType})) as  mongodb.WithId<TokenStorage>;
+            console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ token:", token);
+            return token[tokenname];
     }
 }
 

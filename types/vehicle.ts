@@ -36,6 +36,8 @@ export interface IVehicle {
     messageInfo?: MessageInfo;
     messageType: string;
     prospect_id?:string;
+    pricingTemplate: string;
+    serviceType: string;
 }
 
 export interface MessageInfo {

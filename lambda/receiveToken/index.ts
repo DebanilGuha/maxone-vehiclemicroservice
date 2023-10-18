@@ -13,7 +13,7 @@ export const handler: Handler = async (event: any, context: Context, callback: C
     console.log("event 👉", event);
     const { Records: [{ Sns }] } = event;
     console.log("SNS", Sns);
-    const { Input, TaskToken } = JSON.parse(Sns.Message);
+    let { Input, TaskToken } = JSON.parse(Sns.Message);
     let message: IVehicle = JSON.parse(Sns.Message);
     if (Input && Object.keys(Input).length > 0) {
       message = Input;
@@ -47,6 +47,9 @@ export const handler: Handler = async (event: any, context: Context, callback: C
         }
         message[`documentStatus`] = message?.messageInfo?.documentStatus || '';
         delete message['messageInfo'];
+        if(!Input){
+          Input= message
+        }
         //Assume:  V1 team get the signal for New send the Vehicle Forward for New
         if (Input?.documentStatus === 'New') {
           console.log(`Entered New`);
@@ -83,7 +86,7 @@ export const handler: Handler = async (event: any, context: Context, callback: C
         }).promise()
         break;
     }
-    console.log("🚀 ~ file: index.ts:14 ~ consthandler:Handler= ~ TaskToken:", TaskToken)
+    console.log("🚀 ~ file: index.ts:14 ~ consthandler:Handler= ~ TaskToken:", TaskToken);
 
 
     callback(null, { status: 'CompletedTask' });

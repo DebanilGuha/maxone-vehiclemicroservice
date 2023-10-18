@@ -1,8 +1,8 @@
 {
   "Comment": "A description of my state machine",
-  "StartAt": "Vehicle Registration for Inbound",
+  "StartAt": "Inbound Vehicle",
   "States": {
-    "Vehicle Registration for Inbound": {
+    "Inbound Vehicle": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "OutputPath": "$.Payload",
@@ -35,9 +35,9 @@
           },
         "TopicArn": "${vehicleArn}"
       },
-      "Next": "Vehicle Registration for New"
+      "Next": "New Vehicle"
     },
-    "Vehicle Registration for New": {
+    "New Vehicle": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "OutputPath": "$.Payload",
@@ -70,9 +70,9 @@
           },
         "TopicArn": "${vehicleArn}"
       },
-      "Next": "Vehicle Registration for ReadyForActivation"
+      "Next": "ReadyForActivation Vehicle"
     },
-    "Vehicle Registration for ReadyForActivation": {
+    "ReadyForActivation Vehicle": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "OutputPath": "$.Payload",
