@@ -8,12 +8,12 @@ import { Champion } from '../../types/champion';
 const stepfunctions = new AWS.StepFunctions();
 export class StateMachineTriggers {
     uniqueIdentifierCounterCollection: mongodb.Collection<UniqueIdentifier>;
-    tokenCollection: mongodb.Collection<TokenStorage>;
+    vehicleCollection: mongodb.Collection<TokenStorage>;
     constructor() {
        this.initializeCollection();
     }
     private async initializeCollection(){
-        this.tokenCollection = (await getCollection('tokenstorage')) as unknown as mongodb.Collection<TokenStorage>;
+        this.vehicleCollection = (await getCollection('vehicles')) as unknown as mongodb.Collection<TokenStorage>;
     }
     
 
@@ -46,9 +46,8 @@ export class StateMachineTriggers {
     }
     async stateMachineForwardForPayment(body: Champion, TaskToken: string) {
         try {
-            const vehicleCollection = await getCollection('vehicles');
             const prospectCollection = await getCollection('prospects');
-            const vehicleData: mongodb.WithId<IVehicle> = (await vehicleCollection.findOne({vehicle_id: body?.vehicle_id})) as unknown as mongodb.WithId<IVehicle>;
+            const vehicleData: mongodb.WithId<IVehicle> = (await this.vehicleCollection.findOne({vehicle_id: body?.vehicle_id})) as unknown as mongodb.WithId<IVehicle>;
             const payment = {
                 "champion_id": body?.champion_id,
                 "champion_uuid_id": body?.champion_uuid_id,
@@ -72,10 +71,9 @@ export class StateMachineTriggers {
     }
     async stateMachineForwardForContractInitiation(body: Champion, TaskToken: string) {
         try {
-           const vehicleCollection = await getCollection('vehicles');
            const prospectCollection = await getCollection('prospects');
            const uniqueIdentifierCounterCollection = (await getCollection('uniqueIdentifierCounter')) as unknown as mongodb.Collection<UniqueIdentifier>;
-           const vehicleData: mongodb.WithId<IVehicle> = (await vehicleCollection.findOne({vehicle_id: body?.vehicle_id})) as unknown as mongodb.WithId<IVehicle>;
+           const vehicleData: mongodb.WithId<IVehicle> = (await this.vehicleCollection.findOne({vehicle_id: body?.vehicle_id})) as unknown as mongodb.WithId<IVehicle>;
            const constract_id =await generateContractId(vehicleData?.platformInfo,vehicleData?.vehicleLocation,uniqueIdentifierCounterCollection);
             const contract = {
                 "contract_id": constract_id,
@@ -108,7 +106,7 @@ export class StateMachineTriggers {
 
     async stateMachineForwardForInbound(body: IVehicle, TaskToken: string) {
         try {
-            TaskToken = !TaskToken ? await this.getTokenFromStorage('vehicle_id','token') : TaskToken;
+            TaskToken = !TaskToken ? await this.getTokenFromStorage(body?.plateNumber,'token') : TaskToken;
             console.log("this.checkValidationForInboundToNew(body):", this.checkValidationForInboundToNew(body))
             if(this.checkValidationForInboundToNew(body)){
                 body.documentStatus = 'New';
@@ -117,7 +115,7 @@ export class StateMachineTriggers {
                     taskToken: TaskToken
                 }).promise();
             }else{
-                await this.addTokenToStorage('vehicle_id',TaskToken,'token');
+                await this.addTokenToStorage(body?.plateNumber,TaskToken,'token');
             }
             
 
@@ -130,7 +128,7 @@ export class StateMachineTriggers {
         try {
             console.log(" this.checkValidationForNewToReadyForActivation(body):", this.checkValidationForNewToReadyForActivation(body))
             if (this.checkValidationForNewToReadyForActivation(body)) {
-                TaskToken = !TaskToken ? await this.getTokenFromStorage('vehicle_id','tokennew') : TaskToken;
+                TaskToken = !TaskToken ? await this.getTokenFromStorage(body?.plateNumber,'tokennew') : TaskToken;
                 body.documentStatus = 'ReadyForActivation';
                 await stepfunctions.sendTaskSuccess({
                     output: JSON.stringify(body),
@@ -138,7 +136,7 @@ export class StateMachineTriggers {
                 }).promise();
                 console.log('New Added');
             }else{
-                await this.addTokenToStorage('vehicle_id',TaskToken,'tokennew');
+                await this.addTokenToStorage(body?.plateNumber,TaskToken,'tokennew');
             }
             throw 'Not Complying to New';
 
@@ -206,22 +204,22 @@ export class StateMachineTriggers {
         return true;
     }
 
-    private async addTokenToStorage (collectionType:string,TaskToken:string,tokenname:string){
+    private async addTokenToStorage (platenumber:string,TaskToken:string,tokenname:string){
         if(TaskToken){
             const json : any={}
             json[tokenname] = TaskToken
-            const change =  await this.tokenCollection.updateOne({
-                _id:collectionType
+            const change =  await this.vehicleCollection.updateOne({
+                plateNumber:platenumber
             },{
                 $set:json
             })
         }
     }
 
-    private async getTokenFromStorage(collectionType:string,tokenname:string){
-        const token = (await this.tokenCollection.findOne({_id: collectionType})) as  mongodb.WithId<TokenStorage>;
-            console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ token:", token);
-            return token[tokenname];
+    private async getTokenFromStorage(platenumber:string,tokenname:string){
+        const vehicle = (await this.vehicleCollection.findOne({ plateNumber:platenumber})) as  mongodb.WithId<TokenStorage>;
+            console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ vehicle:", vehicle);
+            return vehicle[tokenname];
     }
 }
 
