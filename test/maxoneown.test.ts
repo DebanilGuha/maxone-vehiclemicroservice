@@ -1,17 +1,30 @@
-import * as cdk from 'aws-cdk-lib';
-import { Template, Match } from 'aws-cdk-lib/assertions';
-import * as Maxoneown from '../lib/maxoneown-stack';
+import { MongoClient } from 'mongodb';
+import {trigger} from '../lambda/receiveToken/triggermethods';
+import * as dotenv from 'dotenv';
+import { getCollection } from '../lambda/assets';
+dotenv.config(); // replace with the correct path to your code
 
-test('SQS Queue and SNS Topic Created', () => {
-  const app = new cdk.App();
-  // WHEN
-  const stack = new Maxoneown.MaxoneownStack(app, 'MyTestStack');
-  // THEN
+describe('getTokenFromStorage', () => {
+  let vehicleCollection: any;
 
-  const template = Template.fromStack(stack);
+  beforeAll(async () => {
+    
+    vehicleCollection = getCollection('vehicle');
+    console.log("🚀 ~ file: maxoneown.test.ts:10 ~ beforeAll ~ getCollection:", getCollection)
+  },3000);
 
-  template.hasResourceProperties('AWS::SQS::Queue', {
-    VisibilityTimeout: 300
-  });
-  template.resourceCountIs('AWS::SNS::Topic', 1);
+  afterAll(async () => {
+    await vehicleCollection.drop();
+    await vehicleCollection.client.close();
+  },3000);
+
+  it('should return the token value when found in storage', async () => {
+    
+
+    const result = await trigger.getTokenFromStorage('AGG474QM', 'token');
+    
+  },3000);
+
+ 
 });
+

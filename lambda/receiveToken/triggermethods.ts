@@ -204,7 +204,7 @@ export class StateMachineTriggers {
         return true;
     }
 
-    private async addTokenToStorage (platenumber:string,TaskToken:string,tokenname:string){
+    async addTokenToStorage (platenumber:string,TaskToken:string,tokenname:string){
         if(TaskToken){
             const json : any={}
             json[tokenname] = TaskToken
@@ -216,7 +216,7 @@ export class StateMachineTriggers {
         }
     }
 
-    private async getTokenFromStorage(platenumber:string,tokenname:string){
+    async getTokenFromStorage(platenumber:string,tokenname:string){
         const vehicle = (await this.vehicleCollection.findOne({ plateNumber:platenumber})) as  mongodb.WithId<TokenStorage>;
             console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ vehicle:", vehicle);
             return vehicle[tokenname];

@@ -16,19 +16,14 @@ export const handler: Handler = async (event: any): Promise<APIGatewayProxyResul
         console.log("🚀 ~ file: index.ts:13 ~ consthandler:Handler= ~ body:", body)
         const {Input, TaskToken} = body;
         console.log("🚀 ~ file: index.ts:15 ~ consthandler:Handler= ~ Input:", Input)
-        const  tokenCollection = (await getCollection('tokenstorage')) as unknown as mongo.Collection<TokenStorage>;
         if(TaskToken){
-            const change =  await tokenCollection.updateOne({
-                _id:'movement'
-            },{
-                $set:{token: TaskToken}
-            })
+            await addTokenToStorage(body?.vehicle_id,TaskToken,'tokenmovement');
         }
         if(!Input){
             const dummyMovement = (await getCollection('dummymovement'))  as unknown as mongo.Collection<Document>;
             const insertData = await dummyMovement.insertOne({...body});
             console.log("🚀 ~ file: index.ts:29 ~ consthandler:Handler= ~ insertData:", insertData)
-            const { token } = (await tokenCollection.findOne({_id:'movement'})) as  mongo.WithId<TokenStorage>;
+            const token = !TaskToken ? await getTokenFromStorage(body?.vehicle_id,'tokenmovement') : TaskToken;
             console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ token:", token)
             if(insertData?.acknowledged){
                 await stepfunctions.sendTaskSuccess({
@@ -50,3 +45,26 @@ export const handler: Handler = async (event: any): Promise<APIGatewayProxyResul
     
     
 };
+
+async function addTokenToStorage (vehicle_id:string,TaskToken:string,tokenname:string){
+    const vehicleCollection = (await getCollection('vehicles')) ;
+    if(TaskToken){
+        const json : any={}
+        json[tokenname] = TaskToken
+        const change =  await vehicleCollection.updateOne({
+            vehicle_id:vehicle_id
+        },{
+            $set:json
+        })
+    }
+}
+
+async function getTokenFromStorage(vehicle_id:string,tokenname:string){
+    const vehicleCollection = (await getCollection('vehicles')) ;
+    const vehicle = (await vehicleCollection.findOne({ vehicle_id:vehicle_id})) as any;
+        console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ vehicle:", vehicle);
+        if(!vehicle){
+            throw 'Vehicle is not present';
+        }
+        return vehicle[tokenname];
+}
