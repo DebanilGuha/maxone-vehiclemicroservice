@@ -105,9 +105,9 @@
           },
         "TopicArn": "${vehicleArn}"
       },
-      "Next": "Activation Api"
+      "Next": "Activation Api to Trigger Vehicle Activation"
     },
-    "Activation Api": {
+    "Activation Api to Trigger Vehicle Activation": {
       "Type": "Task",
       "Resource": "arn:aws:states:::apigateway:invoke.waitForTaskToken",
       "Parameters": {
@@ -122,9 +122,9 @@
       },
       
       "ResultPath": "$.ResponseBody",
-      "Next": "Vehicle Activation"
+      "Next": "Activation of Vehicle"
       },
-    "Vehicle Activation": {
+    "Activation of Vehicle": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "OutputPath": "$.Payload",
@@ -145,15 +145,15 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "Choice"
+      "Next": "Choice for Vehicle Activation to Champion Receiving"
     },
-    "Choice": {
+    "Choice for Vehicle Activation to Champion Receiving": {
       "Type": "Choice",
       "Choices": [
         {
           "Variable": "$.championGeneration",
           "BooleanEquals": true,
-          "Next": "SNS Publish for Champion Retrieval"
+          "Next": "SNS Publish for Champion Retrieval to VehicleTopic"
         }
       ],
       "Default": "Fail"
@@ -161,7 +161,7 @@
     "Fail": {
       "Type": "Fail"
     },
-    "SNS Publish for Champion Retrieval": {
+    "SNS Publish for Champion Retrieval to VehicleTopic": {
       "Type": "Task",
       "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
       "Parameters": {
@@ -171,9 +171,9 @@
         },
         "TopicArn": "${championArn}"
       },
-      "Next": "Champion Lambda"
+      "Next": "Champion Create Or Update Lambda for Ready For Pickup"
     },
-    "Champion Lambda": {
+    "Champion Create Or Update Lambda for Ready For Pickup": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "OutputPath": "$.Payload",
@@ -194,9 +194,9 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "SNS Publish for Contracts"
+      "Next": "SNS Publish for Contract Retrieval to VehicleTopic"
     },
-    "SNS Publish for Contracts": {
+    "SNS Publish for Contract Retrieval to VehicleTopic": {
       "Type": "Task",
       "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
       "Parameters": {
@@ -206,9 +206,9 @@
         },
         "TopicArn": "${vehicleArn}"
       },
-      "Next": "Contract Lambda"
+      "Next": "Contract Create Or Update for Contract Activation"
     },
-    "Contract Lambda": {
+    "Contract Create Or Update for Contract Activation": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "OutputPath": "$.Payload",
@@ -249,12 +249,12 @@
         {
           "Variable": "$.messageInfo.documentStatus",
           "StringEquals": "PaymentReceived",
-          "Next": "Contract Lambda"
+          "Next": "Contract Create Or Update for Contract Activation"
         }
       ],
-      "Default": "Movement Addition Api"
+      "Default": "Movement Api Trigger for Vehicle Movement"
     },
-    "Movement Addition Api": {
+    "Movement Api Trigger for Vehicle Movement": {
       "Type": "Task",
       "Resource": "arn:aws:states:::apigateway:invoke.waitForTaskToken",
       "Parameters": {

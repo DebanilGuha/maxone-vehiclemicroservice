@@ -16,8 +16,8 @@ export const handler: Handler = async (event: any,context: Context, callback: Ca
     let message: any = JSON.parse(Sns.Message);
     console.log("🚀 ~ file: index.ts:14 ~ consthandler:Handler= ~ TaskToken:", TaskToken)
     console.log("🚀 ~ file: index.ts:16 ~ consthandler:Handler= ~ Input:", Input);
+    await trigger.stateMachineForwardForChampion(Input,TaskToken)
     if(Input?.championGeneration == true){
-      await trigger.stateMachineForwardForChampion(Input,TaskToken)
     }    
     callback(null,{status:'CompletedTask'});
     return event;

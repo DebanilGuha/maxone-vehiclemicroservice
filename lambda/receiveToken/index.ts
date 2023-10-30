@@ -18,6 +18,9 @@ export const handler: Handler = async (event: any, context: Context, callback: C
     if (Input && Object.keys(Input).length > 0) {
       message = Input;
     }
+    if(Input?.championGeneration == true){
+      await trigger.stateMachineForwardForChampion(Input,TaskToken);
+    }    
     console.log("🚀 ~ file: index.ts:18 ~ consthandler:Handler= ~ message:", message)
     const stateMachineArn = process.env.STATE_MACHINE_ARN;
     console.log(`ForSwitch -->`, message?.messageInfo?.origin);
