@@ -36,7 +36,7 @@ export const handler: Handler = async function (event: any) {
 };
 
 const updateVehicle = async (message: any) => {
-    const vehicleCollection: any = await getCollection('vehicles');
+    const vehicleCollection: any = getCollection('vehicles');
     let findVehicle: any;
 
     try {

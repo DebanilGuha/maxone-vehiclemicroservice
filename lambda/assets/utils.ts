@@ -45,7 +45,7 @@ function numberToBase64String(number: number, desiredLength: number): string {
        this.initializeCollection();
     }
     private async initializeCollection(){
-        this.vehicleCollection = (await getCollection('vehicles')) as unknown as mongodb.Collection<TokenStorage>;
+        this.vehicleCollection = (getCollection('vehicles')) as unknown as mongodb.Collection<TokenStorage>;
     }
     async  addTokenToStorage (platenumber:string,TaskToken:string,tokenname:string){
       if(TaskToken){
@@ -61,6 +61,11 @@ function numberToBase64String(number: number, desiredLength: number): string {
   
   async  getTokenFromStorage(platenumber:string,tokenname:string){
       const vehicle = (await this.vehicleCollection.findOne({ plateNumber:platenumber})) as  mongodb.WithId<TokenStorage>;
+          console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ vehicle:", vehicle);
+          return vehicle[tokenname];
+  }
+  async  getTokenFromStorageByVehicleId(vehicle_id:string,tokenname:string){
+      const vehicle = (await this.vehicleCollection.findOne({ vehicle_id:vehicle_id})) as  mongodb.WithId<TokenStorage>;
           console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ vehicle:", vehicle);
           return vehicle[tokenname];
   }

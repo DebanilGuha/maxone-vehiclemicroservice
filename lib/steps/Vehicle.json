@@ -156,10 +156,7 @@
           "Next": "SNS Publish for Champion Retrieval to VehicleTopic"
         }
       ],
-      "Default": "Fail"
-    },
-    "Fail": {
-      "Type": "Fail"
+      "Default": "Activation Api to Trigger Vehicle Activation"
     },
     "SNS Publish for Champion Retrieval to VehicleTopic": {
       "Type": "Task",

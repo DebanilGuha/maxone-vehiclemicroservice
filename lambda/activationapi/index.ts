@@ -15,15 +15,14 @@ export const handler: Handler = async (event: any): Promise<APIGatewayProxyResul
         const body = JSON.parse(event.body);
         console.log("🚀 ~ file: index.ts:13 ~ consthandler:Handler= ~ body:", body)
         const {Input, TaskToken} = body;
-        console.log("🚀 ~ file: index.ts:15 ~ consthandler:Handler= ~ Input:", Input)
-        const  tokenCollection = (await getCollection('tokenstorage')) as unknown as mongo.Collection<TokenStorage>;
+        console.log("🚀 ~ file: index.ts:18 ~ consthandler:Handler= ~ TaskToken:", TaskToken)
         if(TaskToken){
-            await addTokenToStorage(body?.vehicle_id,TaskToken,'token');
+            await addTokenToStorage(Input?.vehicle_id,TaskToken,'tokenactivation');
         }
         if(!Input){
-            const dummyactivation = (await getCollection('dummyactivation'))  as unknown as mongo.Collection<Document>;
+            const dummyactivation = (getCollection('dummyactivation'))  as unknown as mongo.Collection<Document>;
             const insertData = await dummyactivation.insertOne({...body});
-            const token = !TaskToken ? await getTokenFromStorage(body?.vehicle_id,'token') : TaskToken;
+            const token = !TaskToken ? await getTokenFromStorage(body?.vehicle_id,'tokenactivation') : TaskToken;
             if(insertData?.acknowledged){
                 await stepfunctions.sendTaskSuccess({
                     output: JSON.stringify({movementExecution: true}),
@@ -47,20 +46,18 @@ export const handler: Handler = async (event: any): Promise<APIGatewayProxyResul
 
 
  async function addTokenToStorage (vehicle_id:string,TaskToken:string,tokenname:string){
-    const vehicleCollection = (await getCollection('vehicles')) ;
-    if(TaskToken){
+    const vehicleCollection = (getCollection('vehicles')) ;
         const json : any={}
         json[tokenname] = TaskToken
-        const change =  await vehicleCollection.updateOne({
+        await vehicleCollection.updateOne({
             vehicle_id:vehicle_id
         },{
             $set:json
         })
-    }
 }
 
 async function getTokenFromStorage(vehicle_id:string,tokenname:string){
-    const vehicleCollection = (await getCollection('vehicles')) ;
+    const vehicleCollection = (getCollection('vehicles')) ;
     const vehicle = (await vehicleCollection.findOne({ vehicle_id:vehicle_id})) as any;
         console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ vehicle:", vehicle);
         if(!vehicle){

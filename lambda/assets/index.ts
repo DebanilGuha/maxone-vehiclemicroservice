@@ -39,8 +39,8 @@ export const generateVehicleId = async (
   location: string,
   uniqueIdentifierCounterCollection: mongo.Collection<UniqueIdentifier>,
 ) => {
-  const locationMapCollection: any = await getCollection('locations');
-  const vehicleTypeCollection: any = await getCollection('vehicleTypes');
+  const locationMapCollection: any = getCollection('locations');
+  const vehicleTypeCollection: any = getCollection('vehicleTypes');
   const locationCode = await locationMapCollection.findOne({
       location: { $eq: location },
   });
@@ -67,7 +67,7 @@ export const generateChampionId = async (
   location: string,
   uniqueIdentifierCounterCollection: mongo.Collection<UniqueIdentifier>,
 ): Promise<string> => {
-  const locationMapCollection: any = await getCollection('locations');
+  const locationMapCollection: any = getCollection('locations');
   const locationCode = await locationMapCollection.findOne({
       location: { $eq: location },
   });
@@ -94,7 +94,7 @@ export const generateContractId = async (
   location: string,
   uniqueIdentifierCounterCollection: mongo.Collection<UniqueIdentifier>,
 ): Promise<string> => {
-  const locationMapCollection: any = await getCollection('locations');
+  const locationMapCollection: any = getCollection('locations');
   const locationCode = await locationMapCollection.findOne({
       location: { $eq: location },
   });

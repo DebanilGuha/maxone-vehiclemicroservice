@@ -14,7 +14,7 @@ export const handler: Handler = async (event: any) => {
     } = event;
     console.log("🚀 ~ file: index.ts:14 ~ consthandler:Handler= ~ Input:", Input)
     let response:IVehicle;
-    const uniqueIdentifierCounterCollection = (await getCollection('uniqueIdentifierCounter')) as unknown as mongo.Collection<UniqueIdentifier>;
+    const uniqueIdentifierCounterCollection = (getCollection('uniqueIdentifierCounter')) as unknown as mongo.Collection<UniqueIdentifier>;
     const collectionVehicle: Collection<Document> = getCollection("vehicles");
     const Vehicle: mongo.WithId<IVehicle> | null = (await collectionVehicle.findOne({plateNumber: Input.plateNumber})) as mongo.WithId<IVehicle> | null;
     const options: mongo.FindOneAndUpdateOptions={ returnDocument: 'before' }

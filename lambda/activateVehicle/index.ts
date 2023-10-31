@@ -11,11 +11,11 @@ const sns = new AWS.SNS();
 
 const ACTIVATION = 'ACTIVATION';
 const activationProcess = async (): Promise<any> => {
-    const vehicleCollection: mongodb.Collection<mongodb.Document> = await getCollection('vehicles') as unknown as mongodb.Collection<mongodb.Document>;
-    const prospectCollection: mongodb.Collection<mongodb.Document> = await getCollection('prospects') as unknown as mongodb.Collection<mongodb.Document>;
-    const championCollection: mongodb.Collection<mongodb.Document> = await getCollection('champions') as unknown as mongodb.Collection<mongodb.Document>;
-    const activationCollection: mongodb.Collection<mongodb.Document> = await getCollection('dummyactivation') as unknown as mongodb.Collection<mongodb.Document>;
-    const uniqueIdentifierCounterCollection: mongodb.Collection<mongodb.Document> = await getCollection('uniqueIdentifierCounter') as unknown as mongodb.Collection<mongodb.Document>;
+    const vehicleCollection: mongodb.Collection<mongodb.Document> = getCollection('vehicles') as unknown as mongodb.Collection<mongodb.Document>;
+    const prospectCollection: mongodb.Collection<mongodb.Document> = getCollection('prospects') as unknown as mongodb.Collection<mongodb.Document>;
+    const championCollection: mongodb.Collection<mongodb.Document> = getCollection('champions') as unknown as mongodb.Collection<mongodb.Document>;
+    const activationCollection: mongodb.Collection<mongodb.Document> = getCollection('dummyactivation') as unknown as mongodb.Collection<mongodb.Document>;
+    const uniqueIdentifierCounterCollection: mongodb.Collection<mongodb.Document> = getCollection('uniqueIdentifierCounter') as unknown as mongodb.Collection<mongodb.Document>;
     let stopLoop = false;
     do {
         try {

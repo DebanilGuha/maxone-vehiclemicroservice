@@ -20,7 +20,7 @@ export const handler: Handler = async (event: any): Promise<APIGatewayProxyResul
             await addTokenToStorage(body?.vehicle_id,TaskToken,'tokenmovement');
         }
         if(!Input){
-            const dummyMovement = (await getCollection('dummymovement'))  as unknown as mongo.Collection<Document>;
+            const dummyMovement = (getCollection('dummymovement'))  as unknown as mongo.Collection<Document>;
             const insertData = await dummyMovement.insertOne({...body});
             console.log("🚀 ~ file: index.ts:29 ~ consthandler:Handler= ~ insertData:", insertData)
             const token = !TaskToken ? await getTokenFromStorage(body?.vehicle_id,'tokenmovement') : TaskToken;
@@ -47,7 +47,7 @@ export const handler: Handler = async (event: any): Promise<APIGatewayProxyResul
 };
 
 async function addTokenToStorage (vehicle_id:string,TaskToken:string,tokenname:string){
-    const vehicleCollection = (await getCollection('vehicles')) ;
+    const vehicleCollection = (getCollection('vehicles')) ;
     if(TaskToken){
         const json : any={}
         json[tokenname] = TaskToken
@@ -60,7 +60,7 @@ async function addTokenToStorage (vehicle_id:string,TaskToken:string,tokenname:s
 }
 
 async function getTokenFromStorage(vehicle_id:string,tokenname:string){
-    const vehicleCollection = (await getCollection('vehicles')) ;
+    const vehicleCollection = (getCollection('vehicles')) ;
     const vehicle = (await vehicleCollection.findOne({ vehicle_id:vehicle_id})) as any;
         console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ vehicle:", vehicle);
         if(!vehicle){

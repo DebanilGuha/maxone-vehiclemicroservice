@@ -2,6 +2,7 @@ import { MongoClient } from 'mongodb';
 import {trigger} from '../lambda/receiveToken/triggermethods';
 import * as dotenv from 'dotenv';
 import { getCollection } from '../lambda/assets';
+import { utilObj } from '../lambda/assets/utils';
 dotenv.config(); // replace with the correct path to your code
 
 describe('getTokenFromStorage', () => {
@@ -21,7 +22,7 @@ describe('getTokenFromStorage', () => {
   it('should return the token value when found in storage', async () => {
     
 
-    const result = await trigger.getTokenFromStorage('AGG474QM', 'token');
+    const result = await utilObj.getTokenFromStorage('AGG474QM', 'token');
     
   },3000);
 

@@ -14,7 +14,7 @@ export class StateMachineTriggers {
        this.initializeCollection();
     }
     private async initializeCollection(){
-        this.vehicleCollection = (await getCollection('vehicles')) as unknown as mongodb.Collection<TokenStorage>;
+        this.vehicleCollection = (getCollection('vehicles')) as unknown as mongodb.Collection<TokenStorage>;
     }
     
 
@@ -47,7 +47,7 @@ export class StateMachineTriggers {
     }
     async stateMachineForwardForPayment(body: Champion, TaskToken: string) {
         try {
-            const prospectCollection = await getCollection('prospects');
+            const prospectCollection = getCollection('prospects');
             const vehicleData: mongodb.WithId<IVehicle> = (await this.vehicleCollection.findOne({vehicle_id: body?.vehicle_id})) as unknown as mongodb.WithId<IVehicle>;
             const payment = {
                 "champion_id": body?.champion_id,
@@ -72,8 +72,8 @@ export class StateMachineTriggers {
     }
     async stateMachineForwardForContractInitiation(body: Champion, TaskToken: string) {
         try {
-           const prospectCollection = await getCollection('prospects');
-           const uniqueIdentifierCounterCollection = (await getCollection('uniqueIdentifierCounter')) as unknown as mongodb.Collection<UniqueIdentifier>;
+           const prospectCollection = getCollection('prospects');
+           const uniqueIdentifierCounterCollection = (getCollection('uniqueIdentifierCounter')) as unknown as mongodb.Collection<UniqueIdentifier>;
            const vehicleData: mongodb.WithId<IVehicle> = (await this.vehicleCollection.findOne({vehicle_id: body?.vehicle_id})) as unknown as mongodb.WithId<IVehicle>;
            const constract_id =await generateContractId(vehicleData?.platformInfo,vehicleData?.vehicleLocation,uniqueIdentifierCounterCollection);
             const contract = {
@@ -148,7 +148,9 @@ export class StateMachineTriggers {
 
     async stateMachineForwardForChampion(body: IVehicle, TaskToken: string) {
         await utilObj.addTokenToStorage(body?.plateNumber,TaskToken,'tokenchampion');
-
+    }
+    async stateMachineForwardForContract(body: IVehicle, TaskToken: string) {
+        await utilObj.addTokenToStorage(body?.plateNumber,TaskToken,'tokencontract');
     }
     async stateMachineForwardForPaymentComplete(body: Champion, TaskToken: string) {
         try {

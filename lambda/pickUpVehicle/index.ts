@@ -10,11 +10,11 @@ import { checkGraduateAndNormalData } from './processing';
 
 
 const pickUpProcess = async (movementDocument: any) => {
-    const vehicleCollection: mongodb.Collection<mongodb.Document> = (await getCollection('vehicles')) as unknown as mongodb.Collection<mongodb.Document>;
-    const prospectCollection: mongodb.Collection<mongodb.Document> = (await getCollection('prospects')) as unknown as mongodb.Collection<mongodb.Document>;
-    const movementCollection: mongodb.Collection<mongodb.Document> = (await getCollection('movements')) as unknown as mongodb.Collection<mongodb.Document>;
-    const championCollection: mongodb.Collection<mongodb.Document> = (await getCollection('dummychampion')) as unknown as mongodb.Collection<mongodb.Document>;
-    const activationCollection: mongodb.Collection<mongodb.Document> = (await getCollection('dummyactivation')) as unknown as mongodb.Collection<mongodb.Document>;
+    const vehicleCollection: mongodb.Collection<mongodb.Document> = (getCollection('vehicles')) as unknown as mongodb.Collection<mongodb.Document>;
+    const prospectCollection: mongodb.Collection<mongodb.Document> = (getCollection('prospects')) as unknown as mongodb.Collection<mongodb.Document>;
+    const movementCollection: mongodb.Collection<mongodb.Document> = (getCollection('movements')) as unknown as mongodb.Collection<mongodb.Document>;
+    const championCollection: mongodb.Collection<mongodb.Document> = (getCollection('dummychampion')) as unknown as mongodb.Collection<mongodb.Document>;
+    const activationCollection: mongodb.Collection<mongodb.Document> = (getCollection('dummyactivation')) as unknown as mongodb.Collection<mongodb.Document>;
     const options: mongodb.FindOneAndUpdateOptions={ returnDocument: 'after' };
     console.log(JSON.stringify(movementDocument, null, '\t'));
     try {

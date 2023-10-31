@@ -16,9 +16,9 @@ export const handler: Handler = async (event: any) => {
         return 'Json incorrect';
     }
 
-    // const vehicleCollection: mongodb.Collection<mongodb.Document> = (await getCollection('vehicles')) as unknown as mongodb.Collection<mongodb.Document>;
-    const championCollection: mongodb.Collection<mongodb.Document> = (await getCollection('dummychampion')) as unknown as mongodb.Collection<mongodb.Document>;
-    const activationCollection: mongodb.Collection<mongodb.Document> = (await getCollection('dummyactivation')) as unknown as mongodb.Collection<mongodb.Document>;
+    // const vehicleCollection: mongodb.Collection<mongodb.Document> = (getCollection('vehicles')) as unknown as mongodb.Collection<mongodb.Document>;
+    const championCollection: mongodb.Collection<mongodb.Document> = (getCollection('dummychampion')) as unknown as mongodb.Collection<mongodb.Document>;
+    const activationCollection: mongodb.Collection<mongodb.Document> = (getCollection('dummyactivation')) as unknown as mongodb.Collection<mongodb.Document>;
     try {
         
         //Champion Update----------------------------------------------------------
