@@ -1,9 +1,9 @@
 import * as mongo from "mongodb";
 const { MongoClient } = mongo;
 import Ajv from "ajv";
-import { IVehicle } from "../../types/vehicle";
-import { UniqueIdentifier } from "../../types/uniqueIdentifier";
-import { Champion } from "../../types/champion";
+import { IVehicle } from "../types/vehicle";
+import { UniqueIdentifier } from "../types/uniqueIdentifier";
+import { Champion } from "../types/champion";
 const ajv = new Ajv({ allErrors: true });
 
 type CollectionName = string;

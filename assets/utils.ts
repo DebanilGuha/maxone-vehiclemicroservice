@@ -1,5 +1,5 @@
 import * as mongodb from 'mongodb'
-import { TokenStorage } from '../../types/uniqueIdentifier';
+import { TokenStorage } from '../types/uniqueIdentifier';
 import { getCollection } from '.';
 
 function numberToBase64String(number: number, desiredLength: number): string {
@@ -53,6 +53,17 @@ function numberToBase64String(number: number, desiredLength: number): string {
           json[tokenname] = TaskToken
           const change =  await this.vehicleCollection.updateOne({
               plateNumber:platenumber
+          },{
+              $set:json
+          })
+      }
+  }
+    async  addTokenToStorageVehicleId (vehicle_id:string,TaskToken:string,tokenname:string){
+      if(TaskToken){
+          const json : any={}
+          json[tokenname] = TaskToken
+          const change =  await this.vehicleCollection.updateOne({
+              plateNumber:vehicle_id
           },{
               $set:json
           })

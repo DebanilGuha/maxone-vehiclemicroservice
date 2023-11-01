@@ -13,13 +13,14 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import * as dotenv from 'dotenv';
 import * as expand from 'dotenv-expand';
-const env= dotenv.config();
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+const env = dotenv.config();
 expand.expand(env);
 
 export class MaxoneownStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-    const defaultenv : {[key:string]: string}= {
+    const defaultenv: { [key: string]: string } = {
       MONGODBURL: process.env.MONGODBURL || ''
     };
     const stepfunction_role = new iam.Role(this, 'VAMS3.0FunctionsRole', {
@@ -30,326 +31,134 @@ export class MaxoneownStack extends Stack {
     stepfunction_role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSNSFullAccess'));
     stepfunction_role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonAPIGatewayInvokeFullAccess'));
 
-    const newCreateOrUpdate = new NodejsFunction(
+    const apiGatewayRole = new iam.Role(this, 'ApiGatewayRole', {
+      assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com'), // Assume the role by API Gateway
+    });
+
+
+
+    const vehicleCreateOrUpdate = new NodejsFunction(
       this,
-      "newCreateOrUpdate",
+      "vehicleCreateOrUpdate",
       {
         runtime: lambda.Runtime.NODEJS_18_X,
         timeout: Duration.seconds(15),
-        memorySize : 2048,
-        environment: {...defaultenv},
+        environment: { ...defaultenv },
+        bundling: {
+          nodeModules: ["mongodb", "ajv", "aws-sdk"],
+          minify: true,
+        },
         entry: path.join(
           __dirname,
           "/../lambda",
-          'newCreateOrUpdate',
+          'vehicleCrud',
           'index.ts'
         ),
       }
     );
-    
-    const inboundCreateOrUpdate = new NodejsFunction(
+    const vehicleApiGateway = new NodejsFunction(
       this,
-      "inboundCreateOrUpdate",
+      "vehicleApiGateway",
       {
         runtime: lambda.Runtime.NODEJS_18_X,
         timeout: Duration.seconds(15),
-        environment: {...defaultenv},
-        bundling: {
-          nodeModules: ["mongodb", "ajv", "aws-sdk"],
-          minify: true,
-        },
+        environment: { ...defaultenv },
         entry: path.join(
           __dirname,
           "/../lambda",
-          'inboundCreateOrUpdate',
+          'vehicleApiGateway',
           'index.ts'
         ),
       }
     );
-    const championCreateOrUpdate = new NodejsFunction(
+    const vehicleSnsSubscribe = new NodejsFunction(
       this,
-      "championCreateOrUpdate",
-      {
-        runtime: lambda.Runtime.NODEJS_18_X,
-        timeout: Duration.seconds(5),
-        environment: {...defaultenv},
-        bundling: {
-          nodeModules: ["mongodb", "ajv", "aws-sdk"],
-          minify: true,
-        },
-        entry: path.join(
-          __dirname,
-          "/../lambda",
-          'championCreateOrUpdate',
-          'index.ts'
-        ),
-      }
-    );
-    const contractCreateOrUpdate = new NodejsFunction(
-      this,
-      "contractCreateOrUpdate",
-      {
-        runtime: lambda.Runtime.NODEJS_18_X,
-        timeout: Duration.seconds(5),
-        environment: {...defaultenv},
-        bundling: {
-          nodeModules: ["mongodb", "ajv", "aws-sdk"],
-          minify: true,
-        },
-        entry: path.join(
-          __dirname,
-          "/../lambda",
-          'contractCreateOrUpdate',
-          'index.ts'
-        ),
-      }
-    );
-
-      //Movement Data
-    const movement = new NodejsFunction(
-      this,
-      "movement",
-      {
-        runtime: lambda.Runtime.NODEJS_18_X,
-        timeout: Duration.seconds(5),
-        environment: {...defaultenv},
-        entry: path.join(
-          __dirname,
-          "/../lambda",
-          'movement',
-          'index.ts'
-        ),
-      }
-    );
-    const pickUpVehicle = new NodejsFunction(
-      this,
-      "pickUpVehicle",
-      {
-        runtime: lambda.Runtime.NODEJS_18_X,
-        timeout: Duration.seconds(5),
-        environment: {...defaultenv},
-        entry: path.join(
-          __dirname,
-          "/../lambda",
-          'pickUpVehicle',
-          'index.ts'
-        ),
-      }
-    );
-
-
-    const readyForActivationCreateOrUpdate = new NodejsFunction(
-      this,
-      "readyForActivationCreateOrUpdate",
-      {
-        runtime: lambda.Runtime.NODEJS_18_X,
-        timeout: Duration.seconds(5),
-        environment: {...defaultenv},
-        bundling: {
-          nodeModules: ["mongodb", "ajv", "aws-sdk"],
-          minify: true,
-        },
-        entry: path.join(
-          __dirname,
-          "/../lambda",
-          'readyForActivationCreateOrUpdate',
-          'index.ts'
-        ),
-      }
-    );
-
-    const receiveToken = new NodejsFunction(
-      this,
-      "receiveToken",
-      {
-        runtime: lambda.Runtime.NODEJS_18_X,
-        timeout: Duration.minutes(5),
-        memorySize : 2048,
-        environment:{
-          STATE_MACHINE_ARN:'',
-          ...defaultenv
-        },
-        bundling: {
-          nodeModules: ["mongodb", "ajv", "aws-sdk"],
-          minify: true,
-        },
-        entry: path.join(
-          __dirname,
-          "/../lambda",
-          'receiveToken',
-          'index.ts'
-        ),
-      }
-    );
-
-    //Champion to Get Token
-    const championReceiveToken = new NodejsFunction(
-      this,
-      "championReceiveToken",
-      {
-        runtime: lambda.Runtime.NODEJS_18_X,
-        timeout: Duration.minutes(5),
-        memorySize : 2048,
-        environment:{
-          STATE_MACHINE_ARN:'',
-          ...defaultenv
-        },
-        bundling: {
-          nodeModules: ["mongodb", "ajv", "aws-sdk"],
-          minify: true,
-        },
-        entry: path.join(
-          __dirname,
-          "/../lambda",
-          'championReceiveToken',
-          'index.ts'
-        ),
-      }
-    );
-
-
-    const activateVehicle = new NodejsFunction(
-      this,
-      "activateVehicle",
+      "vehicleSnsKeyStore",
       {
         runtime: lambda.Runtime.NODEJS_18_X,
         timeout: Duration.seconds(15),
-        handler:'handler',
-        environment: {...defaultenv},
+        environment: { ...defaultenv },
+        bundling: {
+          nodeModules: ["mongodb", "ajv", "aws-sdk"],
+          minify: true,
+        },
         entry: path.join(
           __dirname,
           "/../lambda",
-          'activateVehicle',
+          'vehicleSnsSubscribe',
           'index.ts'
         ),
       }
     );
-    receiveToken.addToRolePolicy(new iam.PolicyStatement({
+
+    const policyStatement = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      actions: ['states:SendTaskSuccess', 'states:SendTaskFailure'],
+      actions: ['states:SendTaskSuccess', 'states:SendTaskFailure', 'states:StartExecution'],
       resources: ['*'],
-      }));
+    });
 
-    championReceiveToken.addToRolePolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: ['states:SendTaskSuccess', 'states:SendTaskFailure'],
-      resources: ['*'],
-      }));
-
-      
 
     const vehicleTopic = new sns.Topic(this, 'VehicleTopic', {
       displayName: 'My SNS Vehicle Topic',
       fifo: false,
-      topicName: 'Vehicle1'
-    });
-    
-    const championTopic = new sns.Topic(this, 'ChampionTopic', {
-      displayName: 'My SNS Vehicle Topic',
-      fifo: false,
-      topicName: 'Champion1'
+      topicName: 'Vehicle'
     });
 
-    vehicleTopic.addSubscription(new subscriptions.LambdaSubscription(receiveToken));
-    championTopic.addSubscription(new subscriptions.LambdaSubscription(championReceiveToken));
-
-
+    vehicleTopic.addSubscription(new subscriptions.LambdaSubscription(vehicleSnsSubscribe));
 
     const file: any = fs.readFileSync(
       path.join(__dirname, "/../lib/steps/Vehicle.json")
     );
 
-    const movementapiFunction = new NodejsFunction(
-      this,
-      "movementapiFunction",
-      {
-        runtime: lambda.Runtime.NODEJS_18_X,
-        timeout: Duration.seconds(5),
-        environment: {...defaultenv},
-        entry: path.join(
-          __dirname,
-          "/../lambda",
-          'movementapi',
-          'index.ts'
-        ),
-      }
-    );
-    const activationapiFunction = new NodejsFunction(
-      this,
-      "activationapiFunction",
-      {
-        runtime: lambda.Runtime.NODEJS_18_X,
-        timeout: Duration.seconds(5),
-        environment: {...defaultenv},
-        entry: path.join(
-          __dirname,
-          "/../lambda",
-          'activationapi',
-          'index.ts'
-        ),
-      }
-    );
-
-    const movementApi = new api.RestApi(this,'MovementApi',{
-      restApiName:'movement',
-      description:'Api regarding movement'
+    const vehicleApi = new api.RestApi(this, 'VehicleApi', {
+      restApiName: 'vehicle',
+      description: 'Api regarding vehicle'
     });
-    const activationApi = new api.RestApi(this,'ActivationApi',{
-      restApiName:'activation',
-      description:'Api regarding activation'
-    });
-    const lambdaintegration = new api.LambdaIntegration(movementapiFunction);
-    const lambdaintegrationActivation = new api.LambdaIntegration(activationapiFunction);
-    const vehicleMovement = movementApi.root.addResource('movement');
-    const activationResource = activationApi.root.addResource('activation');
-    
-    vehicleMovement.addMethod('POST',lambdaintegration);
-    activationResource.addMethod('POST',lambdaintegrationActivation);
 
 
-    const policyStatement = new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: ['states:SendTaskSuccess', 'states:SendTaskFailure'],
-    });
+    const lambdaintegration = new api.LambdaIntegration(vehicleApiGateway);
+    const vehicleMovement = vehicleApi.root.addResource('vehicle');
+    const vehicleStart = vehicleMovement.addResource('start');
+
+    vehicleMovement.addMethod('POST', lambdaintegration);
+
+
 
     stepfunction_role.addToPolicy(new iam.PolicyStatement({
       actions: ['execute-api:Invoke'],
-      resources: [movementApi.arnForExecuteApi(),activationApi.arnForExecuteApi()], // This gives permission to invoke any method, resource, and stage in the API. Adjust as necessary.
-      }));
-    
+      resources: [vehicleApi.arnForExecuteApi()],
+    }));
+
     policyStatement.addAllResources();
-    movementapiFunction.addToRolePolicy(policyStatement);
-    activationapiFunction.addToRolePolicy(policyStatement);
+    vehicleCreateOrUpdate.addToRolePolicy(policyStatement);
+    vehicleApiGateway.addToRolePolicy(policyStatement);
+
 
     const vams3MaxOneStateMachine = new sfn.CfnStateMachine(
       this,
-      "VAMS3.0MaxOneStateMachine",
+      "VAMS3.1MaxOneStateMachine",
       {
         definitionString: file.toString(),
         definitionSubstitutions: {
-          newFunctionArn: newCreateOrUpdate.functionArn,
-          inboundFunctionArn: inboundCreateOrUpdate.functionArn,
-          vehicleArn: vehicleTopic.topicArn,
-          championArn: championTopic.topicArn,
-          activateVehicle: activateVehicle.functionArn,
-          readyForActivationArn: readyForActivationCreateOrUpdate.functionArn,
-          championCreateOrUpdateArn:championCreateOrUpdate.functionArn,
-          contractCreateOrUpdateArn: contractCreateOrUpdate.functionArn,
-          movementArn:movement.functionArn,
-          pickUpVehicleArn: pickUpVehicle.functionArn,
-          apiurlarn: movementApi.restApiId,
-          activationapiurlarn: activationApi.restApiId
+          vehicleCreateOrUpdateArn: vehicleCreateOrUpdate.functionArn,
+          vehiclecreateorupdatelambdaarn: vehicleApi.restApiId,
+          vehicleTopicArn: vehicleTopic.topicArn,
         },
         roleArn: stepfunction_role.roleArn
       }
     );
-    receiveToken.addToRolePolicy(
-      new iam.PolicyStatement({
-      actions: ['states:StartExecution'],
-      resources: [vams3MaxOneStateMachine.attrArn],
-      })
-      );
-    receiveToken.addEnvironment('STATE_MACHINE_ARN',vams3MaxOneStateMachine.attrArn);
-    
+    vehicleApiGateway.addEnvironment('STATE_MACHINE_ARN', vams3MaxOneStateMachine.attrArn);
+
+
+    const stepFunctionsPolicy = new iam.PolicyStatement({
+      actions: ['states:StartExecution'], // Define the actions you want to allow
+      resources: [vams3MaxOneStateMachine.attrArn], // Replace with your Step Function's ARN
+    });
+
+
+    vehicleApiGateway.addToRolePolicy(
+      stepFunctionsPolicy
+    );
+    apiGatewayRole.addToPolicy(stepFunctionsPolicy);
   }
 }

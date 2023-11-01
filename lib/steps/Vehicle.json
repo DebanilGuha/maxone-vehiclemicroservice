@@ -8,7 +8,7 @@
       "OutputPath": "$.Payload",
       "Parameters": {
         "Payload.$": "$$",
-        "FunctionName": "${inboundFunctionArn}"
+        "FunctionName": "${vehicleCreateOrUpdateArn}"
       },
       "Retry": [
         {
@@ -23,17 +23,17 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "SNS Publish to Vehicle"
+      "Next": "SNS Publish to Vehicle for Inbound to New"
     },
-    "SNS Publish to Vehicle": {
+    "SNS Publish to Vehicle for Inbound to New": {
       "Type": "Task",
       "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
       "Parameters": {
         "Message": {
-          "Input.$": "$", 
-          "TaskToken.$": "$$.Task.Token" 
-          },
-        "TopicArn": "${vehicleArn}"
+          "Input.$": "$",
+          "TaskToken.$": "$$.Task.Token"
+        },
+        "TopicArn": "${vehicleTopicArn}"
       },
       "Next": "New Vehicle"
     },
@@ -43,7 +43,7 @@
       "OutputPath": "$.Payload",
       "Parameters": {
         "Payload.$": "$",
-        "FunctionName": "${newFunctionArn}"
+        "FunctionName": "${vehicleCreateOrUpdateArn}"
       },
       "Retry": [
         {
@@ -58,17 +58,25 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "SNS Publish to Vehicle for New"
+      "Next": "SNS Publish to Vehicle for New to ReadyForActivation",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "Next": "SNS Publish to Vehicle for Inbound to New"
+        }
+      ]
     },
-    "SNS Publish to Vehicle for New": {
+    "SNS Publish to Vehicle for New to ReadyForActivation": {
       "Type": "Task",
       "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
       "Parameters": {
         "Message": {
-          "Input.$": "$", 
-          "TaskToken.$": "$$.Task.Token" 
-          },
-        "TopicArn": "${vehicleArn}"
+          "Input.$": "$",
+          "TaskToken.$": "$$.Task.Token"
+        },
+        "TopicArn": "${vehicleTopicArn}"
       },
       "Next": "ReadyForActivation Vehicle"
     },
@@ -78,7 +86,7 @@
       "OutputPath": "$.Payload",
       "Parameters": {
         "Payload.$": "$",
-        "FunctionName": "${readyForActivationArn}"
+        "FunctionName": "${vehicleCreateOrUpdateArn}"
       },
       "Retry": [
         {
@@ -93,236 +101,27 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "SNS Publish to Vehicle for ReadyForActivation"
+      "Next": "SNS Publish to Vehicle for ReadyForActivation",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "Next": "SNS Publish to Vehicle for New to ReadyForActivation"
+        }
+      ]
     },
     "SNS Publish to Vehicle for ReadyForActivation": {
       "Type": "Task",
       "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
       "Parameters": {
         "Message": {
-          "Input.$": "$", 
-          "TaskToken.$": "$$.Task.Token" 
-          },
-        "TopicArn": "${vehicleArn}"
-      },
-      "Next": "Activation Api to Trigger Vehicle Activation"
-    },
-    "Activation Api to Trigger Vehicle Activation": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::apigateway:invoke.waitForTaskToken",
-      "Parameters": {
-      "ApiEndpoint": "${activationapiurlarn}.execute-api.eu-north-1.amazonaws.com",
-      "Method": "POST",
-      "Stage": "prod",
-      "Path": "activation",
-      "RequestBody": {
-        "Input.$": "$",
-        "TaskToken.$": "$$.Task.Token"
-      }
-      },
-      
-      "ResultPath": "$.ResponseBody",
-      "Next": "Activation of Vehicle"
-      },
-    "Activation of Vehicle": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "OutputPath": "$.Payload",
-      "Parameters": {
-        "Payload.$": "$",
-        "FunctionName": "${activateVehicle}"
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "Choice for Vehicle Activation to Champion Receiving"
-    },
-    "Choice for Vehicle Activation to Champion Receiving": {
-      "Type": "Choice",
-      "Choices": [
-        {
-          "Variable": "$.championGeneration",
-          "BooleanEquals": true,
-          "Next": "SNS Publish for Champion Retrieval to VehicleTopic"
-        }
-      ],
-      "Default": "Activation Api to Trigger Vehicle Activation"
-    },
-    "SNS Publish for Champion Retrieval to VehicleTopic": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
-      "Parameters": {
-        "Message": {
           "Input.$": "$",
           "TaskToken.$": "$$.Task.Token"
         },
-        "TopicArn": "${championArn}"
+        "TopicArn": "${vehicleTopicArn}"
       },
-      "Next": "Champion Create Or Update Lambda for Ready For Pickup"
-    },
-    "Champion Create Or Update Lambda for Ready For Pickup": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "OutputPath": "$.Payload",
-      "Parameters": {
-        "Payload.$": "$",
-        "FunctionName": "${championCreateOrUpdateArn}"
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "SNS Publish for Contract Retrieval to VehicleTopic"
-    },
-    "SNS Publish for Contract Retrieval to VehicleTopic": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
-      "Parameters": {
-        "Message": {
-          "Input.$": "$",
-          "TaskToken.$": "$$.Task.Token"
-        },
-        "TopicArn": "${vehicleArn}"
-      },
-      "Next": "Contract Create Or Update for Contract Activation"
-    },
-    "Contract Create Or Update for Contract Activation": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "OutputPath": "$.Payload",
-      "Parameters": {
-        "Payload.$": "$",
-        "FunctionName": "${contractCreateOrUpdateArn}"
-      },
-      "Retry": [
-        {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException",
-            "Lambda.TooManyRequestsException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
-        }
-      ],
-      "Next": "SNS Publish CheckForPayment"
-    },
-    "SNS Publish CheckForPayment": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
-      "Parameters": {
-        "Message": {
-          "Input.$": "$",
-          "TaskToken.$": "$$.Task.Token"
-        },
-        "TopicArn": "${vehicleArn}"
-      },
-      "Next": "Choice for Payment"
-    },
-    "Choice for Payment": {
-      "Type": "Choice",
-      "Choices": [
-        {
-          "Variable": "$.messageInfo.documentStatus",
-          "StringEquals": "PaymentReceived",
-          "Next": "Contract Create Or Update for Contract Activation"
-        }
-      ],
-      "Default": "Movement Api Trigger for Vehicle Movement"
-    },
-    "Movement Api Trigger for Vehicle Movement": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::apigateway:invoke.waitForTaskToken",
-      "Parameters": {
-      "ApiEndpoint": "${apiurlarn}.execute-api.eu-north-1.amazonaws.com",
-      "Method": "POST",
-      "Stage": "prod",
-      "Path": "movement",
-      "RequestBody": {
-        "Input.$": "$",
-        "TaskToken.$": "$$.Task.Token"
-      }
-      },
-      "ResultPath": "$.ResponseBody",
-      "Next": "Movement"
-      },
-    "Movement": {
-      "Type": "Task",
-      "Resource": "${movementArn}",
-      "OutputPath": "$",
-      "Parameters": {
-        "$": "$",
-        "FunctionName": "${movementArn}",
-        "Payload": {
-          "callback": "true"
-        }
-      },
-      "Next": "Map"
-    },
-    "Map": {
-      "Type": "Map",
-      "InputPath": "$.allDocument",
-      "ResultPath": "$.allDocument.array",
-      "ItemProcessor": {
-        "ProcessorConfig": {
-          "Mode": "INLINE"
-        },
-        "StartAt": "ChoiceMovement",
-        "States": {
-          "ChoiceMovement": {
-            "Type": "Choice",
-            "Choices": [
-              {
-                "Variable": "$.movementType",
-                "StringEquals": "PickUp",
-                "Next": "PickUp"
-              }
-            ]
-          },
-          "PickUp": {
-            "Type": "Task",
-            "Resource": "${pickUpVehicleArn}",
-            "End": true,
-            "Retry": [
-              {
-                "ErrorEquals": [
-                  "States.TaskFailed",
-                  "Lambda.TooManyRequestsException"
-                ],
-                "BackoffRate": 1,
-                "IntervalSeconds": 6,
-                "MaxAttempts": 10
-              }
-            ]
-          }
-        }
-      },
-      "ItemsPath": "$.array",
-      "MaxConcurrency": 100,
       "End": true
     }
-
-
-  } 
+  }
 }
