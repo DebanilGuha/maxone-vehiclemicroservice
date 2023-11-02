@@ -106,7 +106,7 @@ export class MaxoneownStack extends Stack {
 
     vehicleTopic.addSubscription(new subscriptions.LambdaSubscription(vehicleSnsSubscribe));
 
-    const file: any = fs.readFileSync(
+    const file = fs.readFileSync(
       path.join(__dirname, "/../lib/steps/Vehicle.json")
     );
 

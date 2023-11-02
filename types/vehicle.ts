@@ -1,4 +1,5 @@
-export interface IVehicle {
+import {Document} from 'mongodb';
+export interface IVehicle extends Document {
     vehicle_id: string;
     plateNumber: string;
     device_IMEI: string;
@@ -38,6 +39,7 @@ export interface IVehicle {
     prospect_id?:string;
     pricingTemplate: string;
     serviceType: string;
+    isError?: string;
 }
 
 export interface MessageInfo {

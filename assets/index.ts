@@ -49,13 +49,13 @@ export const generateVehicleId = async (
   });
   const vehicleCode = [platformInfo, locationCode?.code, typeCode?.code];
   const inc = 1;
-  const collection:any =(await uniqueIdentifierCounterCollection.findOneAndUpdate(
+  const collection:mongo.WithId<UniqueIdentifier> =(await uniqueIdentifierCounterCollection.findOneAndUpdate(
     { _id: 'vehicle_id' },
     {
       $inc: { count: inc },
     },
     { returnDocument: 'after' }
-  )) as unknown ;
+  )) as unknown as mongo.WithId<UniqueIdentifier>;
   console.log("🚀 ~ file: index.ts:59 ~ collection:", collection)
   const value = collection?.count;
   console.log("🚀 ~ file: index.ts:60 ~ value:", value);
@@ -74,13 +74,13 @@ export const generateChampionId = async (
  
   const vehicleCode = [platformInfo?.toUpperCase(), locationCode?.code, 'CH'];
   const inc = 1;
-  const collection:any =(await uniqueIdentifierCounterCollection.findOneAndUpdate(
+  const collection:mongo.WithId<UniqueIdentifier> =(await uniqueIdentifierCounterCollection.findOneAndUpdate(
     { _id: 'champion_id' },
     {
       $inc: { count: inc },
     },
     { returnDocument: 'after' }
-  )) as unknown ;
+  )) as unknown as mongo.WithId<UniqueIdentifier> ;
   console.log("🚀 ~ file: index.ts:59 ~ collection:", collection)
   const value = collection?.count;
   console.log("🚀 ~ file: index.ts:60 ~ value:", value);
@@ -101,13 +101,13 @@ export const generateContractId = async (
  
   const vehicleCode = [platformInfo?.toUpperCase(), locationCode?.code, 'CO'];
   const inc = 1;
-  const collection:any =(await uniqueIdentifierCounterCollection.findOneAndUpdate(
+  const collection:mongo.WithId<UniqueIdentifier> =(await uniqueIdentifierCounterCollection.findOneAndUpdate(
     { _id: 'contract_id' },
     {
       $inc: { count: inc },
     },
     { returnDocument: 'after' }
-  )) as unknown ;
+  )) as unknown as mongo.WithId<UniqueIdentifier> ;
   console.log("🚀 ~ file: index.ts:59 ~ collection:", collection)
   const value = collection?.count;
   console.log("🚀 ~ file: index.ts:60 ~ value:", value);

@@ -6,23 +6,26 @@ import { IVehicle } from "../../types/vehicle";
 import * as mongo from "mongodb";
 import { UniqueIdentifier } from "../../types/uniqueIdentifier";
 import { VehicleMicroserviceObj } from "./microservices";
+import { utilObj } from "../../assets/utils";
 
 export const handler: Handler = async (event: any) => {
+  console.log("🚀 ~ file: index.ts:15 ~ consthandler:Handler= ~ event:", event);
+  let tosenddata = {} as IVehicle;
+  let token = '' as string;
+  if(event?.Execution?.Input){
+    const {Execution: { Input }} = event;
+    tosenddata = Input;
+  }else{
+    tosenddata = event;
+  }
   try{
-    const {
-      Execution: { Input },
-    } = event;
-    console.log("🚀 ~ file: index.ts:15 ~ consthandler:Handler= ~ event:", event)
-  
-      return await VehicleMicroserviceObj.dynamicCreateOrUpdate(Input);
-    
-    
-
+      return await VehicleMicroserviceObj.dynamicCreateOrUpdate(tosenddata);
   }catch(error){
+    console.error(error);
     return {
-      body: JSON.stringify({ message: error }),
-      statusCode: 500,
-    };
+      statusCode:500,
+      body: JSON.stringify(error)
+    }
   }
   
   

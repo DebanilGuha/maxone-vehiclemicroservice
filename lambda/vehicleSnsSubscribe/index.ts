@@ -11,15 +11,18 @@ export const handler: Handler = async (event: any) => {
     const {
       Records: [{ Sns }],
     } = event;
-    const snsData = JSON.parse(Sns.Message || '{}');
+    const snsData = JSON.parse(Sns.Message);
     const {Input,TaskToken} = snsData;
-    await utilObj.addTokenToStorage(Input?.plateNumber,TaskToken,`Token`);
+    
+      await utilObj.addTokenToStorage(Input?.plateNumber,TaskToken,`Token`);
+    
     return {
-      body: JSON.stringify({ message: `Token is added in plateNumber ${Input?.plateNumber}` }),
+      body: JSON.stringify(Input),
       statusCode: 200,
     }
 
   } catch (error) {
+    console.error(error);
     return {
       body: JSON.stringify({ message: error }),
       statusCode: 500,

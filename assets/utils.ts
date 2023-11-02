@@ -1,6 +1,14 @@
 import * as mongodb from 'mongodb'
 import { TokenStorage } from '../types/uniqueIdentifier';
 import { getCollection } from '.';
+import { IVehicle } from '../types/vehicle';
+import * as AWS from 'aws-sdk';
+
+const stepfunctions = new AWS.StepFunctions();
+
+type jsonToken={
+  tokenname:string
+}
 
 function numberToBase64String(number: number, desiredLength: number): string {
     // Convert the number to its Base64 representation
@@ -60,8 +68,8 @@ function numberToBase64String(number: number, desiredLength: number): string {
   }
     async  addTokenToStorageVehicleId (vehicle_id:string,TaskToken:string,tokenname:string){
       if(TaskToken){
-          const json : any={}
-          json[tokenname] = TaskToken
+          const json: jsonToken ={} as jsonToken;
+          json.tokenname = TaskToken;
           const change =  await this.vehicleCollection.updateOne({
               plateNumber:vehicle_id
           },{
@@ -72,13 +80,50 @@ function numberToBase64String(number: number, desiredLength: number): string {
   
   async  getTokenFromStorage(platenumber:string,tokenname:string){
       const vehicle = (await this.vehicleCollection.findOne({ plateNumber:platenumber})) as  mongodb.WithId<TokenStorage>;
-          console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ vehicle:", vehicle);
+      console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ vehicle:", vehicle);
           return vehicle[tokenname];
   }
   async  getTokenFromStorageByVehicleId(vehicle_id:string,tokenname:string){
       const vehicle = (await this.vehicleCollection.findOne({ vehicle_id:vehicle_id})) as  mongodb.WithId<TokenStorage>;
-          console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ vehicle:", vehicle);
+      await this.clearTokenVehicleId(vehicle_id);    
+      console.log("🚀 ~ file: index.ts:31 ~ consthandler:Handler= ~ vehicle:", vehicle);
           return vehicle[tokenname];
+  }
+
+  async tokenSuccessExchange(body:IVehicle,token:string){
+    const taskInput: AWS.StepFunctions.SendTaskSuccessInput = {
+      output: JSON.stringify(body),
+      taskToken: token
+    };
+    await stepfunctions.sendTaskSuccess(taskInput).promise();
+  }
+
+  async tokenFailureExchange(error:any,token:string):Promise<void>{
+    const TaskToken = token;
+    console.log("🚀 ~ file: microservices.ts:62 ~ VehicleMicroservice ~ sendFailureTask ~ TaskToken:", TaskToken)
+    const errorData: AWS.StepFunctions.SendTaskFailureInput = {
+        taskToken: TaskToken, 
+        error: '400', 
+        cause: error, 
+      };
+
+      const data = await stepfunctions.sendTaskFailure(errorData).promise();
+      console.log('TaskFailure sent:', data);
+}
+
+  private async clearToken(data:string){
+    const change =  await this.vehicleCollection.updateOne({
+      plateNumber:data
+  },{
+      $unset:{Token:''}
+  })
+  }
+  private async clearTokenVehicleId(data:string){
+    const change =  await this.vehicleCollection.updateOne({
+      vehicle_id:data
+  },{
+      $unset:{Token:''}
+  })
   }
   }
   

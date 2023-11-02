@@ -1,5 +1,5 @@
 {
-  "Comment": "A description of my state machine",
+  "Comment": "VAMS Lifecycle State Machine",
   "StartAt": "Inbound Vehicle",
   "States": {
     "Inbound Vehicle": {
@@ -58,15 +58,18 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "SNS Publish to Vehicle for New to ReadyForActivation",
-      "Catch": [
+      "Next": "Choice to Reinvoke New"
+    },
+    "Choice to Reinvoke New": {
+      "Type": "Choice",
+      "Choices": [
         {
-          "ErrorEquals": [
-            "States.TaskFailed"
-          ],
+          "Variable": "$.isError",
+          "StringEquals": "YES",
           "Next": "SNS Publish to Vehicle for Inbound to New"
         }
-      ]
+      ],
+      "Default": "SNS Publish to Vehicle for New to ReadyForActivation"
     },
     "SNS Publish to Vehicle for New to ReadyForActivation": {
       "Type": "Task",
@@ -101,23 +104,25 @@
           "BackoffRate": 2
         }
       ],
-      "Next": "SNS Publish to Vehicle for ReadyForActivation",
-      "Catch": [
+      "Next": "Choice to Reinvoke ReadyForActivation"
+    },
+    "Choice to Reinvoke ReadyForActivation": {
+      "Type": "Choice",
+      "Choices": [
         {
-          "ErrorEquals": [
-            "States.TaskFailed"
-          ],
+          "Variable": "$.isError",
+          "StringEquals": "YES",
           "Next": "SNS Publish to Vehicle for New to ReadyForActivation"
         }
-      ]
+      ],
+      "Default": "SNS Publish to Vehicle for ReadyForActivation"
     },
     "SNS Publish to Vehicle for ReadyForActivation": {
       "Type": "Task",
-      "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
+      "Resource": "arn:aws:states:::sns:publish",
       "Parameters": {
         "Message": {
-          "Input.$": "$",
-          "TaskToken.$": "$$.Task.Token"
+          "Input.$": "$"
         },
         "TopicArn": "${vehicleTopicArn}"
       },
